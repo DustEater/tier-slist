@@ -1,6 +1,6 @@
-# tire-slist — 产品挑选列表
+# tier-slist — 产品挑选列表
 
-基于 **Node.js + Vite + React** 的静态前端工程，在 **Windows、macOS、Linux** 上均可开发与运行（不依赖 Bash 或 Unix 专有命令）。
+基于 **Node.js + Vite + React** 的静态前端工程，在 **Windows、macOS、Linux** 上均可运行；本仓库日常在 **Linux** 上开发与调试，**Windows** 侧按「给最终用户使用」的方式说明。
 
 ## 功能说明
 
@@ -8,7 +8,7 @@
 - **品类与商品**：每条记录有一个 **品类名**（如鼠标）；经济 / 中 / 高三档各自可填 **商品名**、价格、链接（可选）；**至少完整填写一档即可**，其余整档留空。
 - **首页**：全宽排版，按区域分块，卡片网格对比三档。
 - **选用档位**：列表中用下拉框选择当前方案采用的档位；**合计金额按该档位的「价格」**累加。
-- **链接**：按档位填写；某档无链接时列表该格显示「—」。
+- **链接**：按档位填写；某档无链接时列表该格显示灰色「无链接」。
 - **编辑**：列表每行「编辑」进入 `/edit/:id`，保存后写回 localStorage。
 
 ## 源代码结构（`src/`）
@@ -28,32 +28,48 @@
 
 ## 环境要求
 
-- **Node.js**：建议 **20.x LTS** 或 **18.x LTS**（[Windows 安装包](https://nodejs.org/)）
+- **Node.js**：建议 **20.x LTS** 或 **18.x LTS**（[官网下载](https://nodejs.org/)）
 - 包管理器：随 Node 安装的 **npm** 即可（也可用 pnpm / yarn，需自行替换命令）
 
-安装完成后在 **PowerShell**、**命令提示符 (cmd)** 或 **Windows Terminal** 中执行下方命令即可。
+## 在 Linux 上运行（开发 / 调试）
 
-## 在 Windows 上运行
+1. 将本仓库放到任意目录，在终端进入该目录，例如：
 
-1. 将本仓库放到任意目录，例如 `D:\work\web_pick`。
-2. 打开终端，`cd` 到该目录：
-
-   ```text
-   cd /d D:\work\web_pick
+   ```bash
+   cd /path/to/tier-slist
    ```
 
-3. 安装依赖（首次或 `package.json` 变更后）：
+2. 安装依赖（首次或 `package.json` 变更后）：
 
-   ```text
+   ```bash
    npm install
    ```
 
-4. 启动开发服务器：
+3. 启动开发服务器：
 
-   - **方式 A**：双击项目根目录下的 **`dev.bat`**（首次会自动执行 `npm install`）。
-   - **方式 B**：在终端执行 `npm run dev`。
+   ```bash
+   npm run dev
+   ```
 
-5. 终端里会打印本地地址（一般为 `http://127.0.0.1:5173`），用 **Edge / Chrome** 打开即可。
+4. 终端会打印本地地址（一般为 `http://127.0.0.1:5173`），用浏览器打开即可。
+
+生产构建与本地预览构建结果：
+
+```bash
+npm run build
+npm run preview
+```
+
+## 在 Windows 上运行（交付给最终用户）
+
+面向只需打开网页、不改代码的使用者，步骤尽量短。
+
+1. 将项目文件夹放到任意位置（例如 `D:\work\tier-slist`）。
+2. 若本机尚未安装 Node.js，请从 [nodejs.org](https://nodejs.org/) 安装 **LTS**，安装时勾选将 Node 加入 **PATH**，装好后**新开**一个终端窗口。
+3. 安装依赖并启动（二选一）：
+   - **推荐**：双击项目根目录下的 **`dev.bat`**（首次会自动执行 `npm install`，随后启动开发服务器）。
+   - 或在 **PowerShell** / **cmd** / **Windows Terminal** 中进入项目目录后执行 `npm install`，再执行 `npm run dev`。
+4. 终端里出现本地地址后（一般为 `http://127.0.0.1:5173`），用 **Edge** 或 **Chrome** 打开即可。
 
 ## 其他命令
 
@@ -63,11 +79,18 @@
 | `npm run build` | 生产构建，输出到 `dist` |
 | `npm run preview` | 本地预览构建结果   |
 
-## 常见问题（Windows）
+## 常见问题
 
-- **提示找不到 `npm`**：说明未安装 Node 或未加入 PATH，重新安装 Node 并勾选 “Add to PATH”，或重启终端。
-- **公司网络下 `npm install` 很慢或失败**：可配置 npm 镜像或代理（与本仓库无关，按你司规范处理）。
-- **端口被占用**：改用其他端口启动，例如 `npm run dev -- --port 5174`。
+### Linux（开发环境）
+
+- **端口被占用**：改用其他端口，例如 `npm run dev -- --port 5174`。
+- **`npm install` 很慢或失败**：可配置 npm 镜像或代理（与本仓库无关，按环境规范处理）。
+
+### Windows（用户使用）
+
+- **提示找不到 `npm`**：未安装 Node 或未加入 PATH；重新安装 Node 并勾选 “Add to PATH”，或关闭终端后重新打开。
+- **端口被占用**：在项目目录打开终端，执行 `npm run dev -- --port 5174`（`dev.bat` 内部也是调用 `npm run dev`，换端口请用命令行并加上 `--port`）。
+- **`npm install` 很慢或失败**：可配置 npm 镜像或代理（按网络环境处理）。
 
 ## 数据存储
 
