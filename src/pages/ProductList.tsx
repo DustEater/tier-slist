@@ -47,7 +47,7 @@ export function ProductList() {
       <header className="catalog-header">
         <div className="catalog-header-inner">
           <div className="catalog-title-block">
-            <h1>产品列表</h1>
+            <h1>商品统计单</h1>
             <p className="catalog-subtitle">
               每条记录有品类名（如鼠标），各档位再填具体商品名（如雷蛇、罗技）；选用档位参与合计。
             </p>
