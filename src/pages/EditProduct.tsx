@@ -123,6 +123,7 @@ export function EditProduct() {
       <form className="form-card form-card-wide" onSubmit={handleSubmit}>
         {error && <p className="form-error">{error}</p>}
 
+        <p className="form-block-title">区域与品类</p>
         <label className="field">
           <span>区域</span>
           <select
@@ -166,6 +167,7 @@ export function EditProduct() {
           />
         </label>
 
+        <p className="form-block-title">各档位与选用</p>
         <p className="form-section-hint">
           至少保留一个已填档位；未使用的档位可清空商品名与价格整档留空。
         </p>

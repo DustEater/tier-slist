@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { mergeProductsById } from "../domain/mergeProductsById";
 import type { Product } from "../domain/product";
 import { loadProducts, saveProducts } from "../persistence/productsStorage";
 
@@ -14,6 +15,8 @@ type ProductsContextValue = {
   addProduct: (input: Omit<Product, "id">) => void;
   updateProduct: (id: string, patch: Partial<Omit<Product, "id">>) => void;
   removeProduct: (id: string) => void;
+  /** 按 id 与导入列表合并并持久化（同 id 以导入为准，仅本地有的 id 保留）。 */
+  mergeProductsFromImport: (incoming: Product[]) => void;
 };
 
 const ProductsContext = createContext<ProductsContextValue | null>(null);
@@ -51,9 +54,23 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const mergeProductsFromImport = useCallback((incoming: Product[]) => {
+    setProducts((prev) => {
+      const next = mergeProductsById(prev, incoming);
+      saveProducts(next);
+      return next;
+    });
+  }, []);
+
   const value = useMemo(
-    () => ({ products, addProduct, updateProduct, removeProduct }),
-    [products, addProduct, updateProduct, removeProduct],
+    () => ({
+      products,
+      addProduct,
+      updateProduct,
+      removeProduct,
+      mergeProductsFromImport,
+    }),
+    [products, addProduct, updateProduct, removeProduct, mergeProductsFromImport],
   );
 
   return (

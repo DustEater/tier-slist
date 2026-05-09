@@ -10,6 +10,7 @@
 - **选用档位**：列表中用下拉框选择当前方案采用的档位；**合计金额按该档位的「价格」**累加。
 - **链接**：按档位填写；某档无链接时列表该格显示灰色「无链接」。
 - **编辑**：列表每行「编辑」进入 `/edit/:id`，保存后写回 localStorage。
+- **备份与迁移**：列表页「数据备份」区可 **导出 JSON**（与 localStorage 内结构一致，空列表导出为 `[]`）；**导入 JSON** 按 **`id` 合并**（文件中同 id 覆盖本地、新 id 追加、仅本地有的 id 保留；确认后写入），便于多人分文件维护后再合并。
 
 ## 源代码结构（`src/`）
 
@@ -17,13 +18,14 @@
 |------|------|
 | `app/App.tsx` | 路由与根布局 |
 | `pages/` | 页面：列表、添加、编辑 |
-| `components/catalog/` | 首页产品卡片等展示组件 |
+| `components/catalog/` | 首页产品卡片、`DataBackupBar`（导出/导入 JSON） |
 | `components/forms/` | 表单区块（三档输入） |
 | `context/ProductsContext.tsx` | 全局状态与 localStorage 同步 |
-| `domain/` | 领域模型（`product.ts`）与表单解析（`productForm.ts`） |
+| `domain/` | 领域模型（`product.ts`）、按 id 合并（`mergeProductsById.ts`）、表单解析（`productForm.ts`） |
 | `persistence/productsStorage.ts` | 读写 localStorage、旧数据迁移 |
 | `catalog/groupByArea.ts` | 按区域分组排序 |
 | `lib/formatMoney.ts` | 金额格式化 |
+| `lib/backupFilename.ts` | 导出备份默认文件名 |
 | `styles/index.css` | 全局样式 |
 
 ## 环境要求
@@ -94,4 +96,8 @@ npm run preview
 
 ## 数据存储
 
-产品列表保存在浏览器 **localStorage** 中，与操作系统无关；换电脑或换浏览器需自行迁移数据（当前版本未做导出/导入文件功能）。
+产品列表保存在浏览器 **localStorage** 中（键名由 `src/persistence/productsStorage.ts` 定义），与操作系统无关。
+
+**导出**：在列表页「数据备份」中点击「导出 JSON」，得到 `tier-slist-backup-YYYY-MM-DD.json`，内容为 **JSON 数组**，元素为当前版本的产品对象（含 `id`、区域、品类、三档 `economy` / `mid` / `high`、`selectedTier` 等）。空列表时同样可导出，文件为 `[]`。
+
+**导入**：选择上述格式的 JSON 文件；解析失败或任一条记录无法识别时 **不会修改** 本地数据，并显示错误说明。校验通过后需 **确认** 再写入：**按 `id` 合并**——对文件中每个 `id`，若本地已有则整条记录以导入为准覆盖，若无则追加；本地存在且文件中未出现的 `id` **保留不变**。同 `id` 在文件中重复出现时以后者为准。若需得到与文件完全一致的列表，可先清空本地数据（例如导出备份后删除全部产品）再导入。请勿手动篡改 JSON 结构；若文件含旧版扁平字段，加载逻辑会尽量迁移，但建议以本应用导出的文件为准。

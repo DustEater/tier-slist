@@ -26,6 +26,45 @@ export function saveProducts(products: Product[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
 }
 
+/** 与 localStorage 一致的 JSON 文本，便于下载备份（含缩进，便于人工查看）。 */
+export function serializeProductsJson(products: Product[]): string {
+  return JSON.stringify(products, null, 2);
+}
+
+export type ParseImportResult =
+  | { ok: true; products: Product[] }
+  | { ok: false; message: string };
+
+/**
+ * 解析用户选择的备份文件。根节点须为数组；任一条无法规范化则整体失败，不覆盖现有数据。
+ */
+export function parseImportedProductsJson(text: string): ParseImportResult {
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return { ok: false, message: "文件不是有效的 JSON，或编码不正确。" };
+  }
+  if (!Array.isArray(data)) {
+    return {
+      ok: false,
+      message: "JSON 根节点必须是数组（与导出文件格式一致）。",
+    };
+  }
+  const out: Product[] = [];
+  for (let i = 0; i < data.length; i++) {
+    const p = normalizeProduct(data[i]);
+    if (!p) {
+      return {
+        ok: false,
+        message: `第 ${i + 1} 条记录无法识别为当前版本支持的产品数据，未修改本地列表。`,
+      };
+    }
+    out.push(p);
+  }
+  return { ok: true, products: out };
+}
+
 function normalizeProduct(x: unknown): Product | null {
   if (x === null || typeof x !== "object") return null;
   const o = x as Record<string, unknown>;

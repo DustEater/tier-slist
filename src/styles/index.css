@@ -1,10 +1,18 @@
 :root {
+  --color-text: #1a1a1a;
+  --color-text-muted: #6b7280;
+  --color-surface: #fff;
+  --color-page-bg: #f4f5f7;
+  --radius-card: 14px;
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.06);
+  --content-max-text: 42rem;
+
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
     Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #1a1a1a;
-  background-color: #f4f5f7;
+  color: var(--color-text);
+  background-color: var(--color-page-bg);
 }
 
 * {
@@ -58,8 +66,88 @@ body {
 .catalog-subtitle {
   margin: 0;
   font-size: 0.9375rem;
-  color: #6b7280;
-  max-width: 42rem;
+  color: var(--color-text-muted);
+  line-height: 1.55;
+  max-width: var(--content-max-text);
+}
+
+.catalog-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.catalog-data-block {
+  position: relative;
+  margin-top: 1.25rem;
+  padding: 1rem 1.15rem;
+  background: var(--color-surface);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.catalog-data-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.catalog-data-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}
+
+.catalog-data-label {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.catalog-data-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.catalog-data-hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.catalog-data-notice {
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.catalog-data-notice-success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.catalog-data-notice-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
 }
 
 .btn-lg {
@@ -111,9 +199,35 @@ body {
   margin: 2rem auto;
   text-align: center;
   padding: 2rem;
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 12px;
   border: 1px dashed #d1d5db;
+}
+
+.empty-catalog-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2.5rem 1.5rem;
+  box-shadow: var(--shadow-card);
+  border-style: solid;
+  border-color: #e5e7eb;
+}
+
+.empty-catalog-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.empty-catalog-text {
+  margin: 0;
+  max-width: 26rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
 }
 
 .product-card {
@@ -284,6 +398,15 @@ body {
 .btn-primary:hover {
   background: #1d4ed8;
   border-color: #1d4ed8;
+}
+
+.btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.btn-ghost:focus-visible {
+  outline-color: #64748b;
 }
 
 .btn-ghost {
@@ -480,10 +603,6 @@ body {
   color: #9ca3af;
 }
 
-.form-card-wide {
-  max-width: 640px;
-}
-
 .field-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -514,7 +633,7 @@ body {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .footer-total strong {
@@ -529,11 +648,29 @@ body {
 
 .form-card {
   max-width: 480px;
-  background: #fff;
+  background: var(--color-surface);
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+  box-shadow: var(--shadow-card);
+}
+
+.form-card-wide {
+  max-width: 640px;
+  box-shadow: var(--shadow-card);
+}
+
+.form-block-title {
+  margin: 1.25rem 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.form-block-title:first-child {
+  margin-top: 0;
 }
 
 .form-error {
@@ -558,14 +695,17 @@ body {
   color: #374151;
 }
 
-.field input {
+.field input,
+.field select {
   padding: 0.5rem 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 1rem;
+  background: var(--color-surface);
 }
 
-.field input:focus {
+.field input:focus,
+.field select:focus {
   outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgb(37 99 235 / 0.15);

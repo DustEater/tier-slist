@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { DataBackupBar } from "../components/catalog/DataBackupBar";
 import { ProductCard } from "../components/catalog/ProductCard";
 import { groupProductsByArea } from "../catalog/groupByArea";
 import { useProducts } from "../context/ProductsContext";
@@ -24,16 +25,25 @@ export function ProductList() {
               每条记录有品类名（如鼠标），各档位再填具体商品名（如雷蛇、罗技）；选用档位参与合计。
             </p>
           </div>
+          <div className="catalog-header-actions">
+            <Link className="btn btn-primary btn-lg" to="/add">
+              添加产品
+            </Link>
+          </div>
+        </div>
+        <DataBackupBar products={products} />
+      </header>
+
+      {products.length === 0 ? (
+        <div className="empty-catalog empty-catalog-cta" role="status">
+          <p className="empty-catalog-title">暂无产品</p>
+          <p className="empty-catalog-text">
+            点击「添加产品」填写品类名与各档位商品名、价格、链接；也可先「导出 JSON」得到空列表文件，在别处编辑后再导入。
+          </p>
           <Link className="btn btn-primary btn-lg" to="/add">
             添加产品
           </Link>
         </div>
-      </header>
-
-      {products.length === 0 ? (
-        <p className="empty empty-catalog">
-          暂无产品，点击「添加产品」填写品类名与各档位商品名、价格、链接。
-        </p>
       ) : (
         <main className="catalog-main">
           {groups.map(({ area, items }) => (
