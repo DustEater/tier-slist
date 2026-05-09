@@ -1,10 +1,9 @@
-import { memo } from "react";
+import { memo, type KeyboardEvent } from "react";
 import { Link } from "react-router-dom";
 import type { PriceTier, Product } from "../../domain/product";
 import {
   isTierFilled,
   pickSelectedTier,
-  priceForTier,
   tierSlot,
   TIER_LABELS,
   TIER_ORDER,
@@ -44,7 +43,7 @@ function ProductCardInner({ product: p, onTierChange, onRemove }: Props) {
             >
               {filledTiers.map((tier) => (
                 <option key={tier} value={tier}>
-                  {TIER_LABELS[tier]} · {formatMoney(priceForTier(p, tier))} 元
+                  {TIER_LABELS[tier]}
                 </option>
               ))}
             </select>
@@ -72,10 +71,35 @@ function ProductCardInner({ product: p, onTierChange, onRemove }: Props) {
           const s = tierSlot(p, tier);
           const active = effectiveTier === tier;
           const empty = !isTierFilled(s);
+          const clickable = !empty;
+
+          function handlePanelClick() {
+            if (!clickable) return;
+            onTierChange(p.id, tier);
+          }
+
+          function handlePanelKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+            if (!clickable) return;
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onTierChange(p.id, tier);
+            }
+          }
+
           return (
             <div
               key={tier}
-              className={`tier-panel ${active && !empty ? "tier-panel-active" : ""} ${empty ? "tier-panel-empty" : ""}`}
+              className={`tier-panel ${active && !empty ? "tier-panel-active" : ""} ${empty ? "tier-panel-empty" : ""} ${clickable ? "tier-panel-clickable" : ""}`}
+              role={clickable ? "button" : undefined}
+              tabIndex={clickable ? 0 : undefined}
+              aria-label={
+                clickable
+                  ? `选用${TIER_LABELS[tier]}（点击与上方下拉框同步）`
+                  : undefined
+              }
+              aria-pressed={clickable ? active : undefined}
+              onClick={clickable ? handlePanelClick : undefined}
+              onKeyDown={clickable ? handlePanelKeyDown : undefined}
             >
               <div className="tier-panel-head">{TIER_LABELS[tier]}</div>
               <div className="tier-panel-sublabel">商品名</div>
@@ -103,6 +127,7 @@ function ProductCardInner({ product: p, onTierChange, onRemove }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="link"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     打开链接
                   </a>

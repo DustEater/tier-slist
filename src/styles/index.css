@@ -316,6 +316,16 @@ body {
   background: #f9fafb;
 }
 
+.tier-panel-clickable:hover:not(.tier-panel-active) {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.tier-panel-clickable:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
 .tier-panel-head {
   font-size: 0.75rem;
   font-weight: 600;
