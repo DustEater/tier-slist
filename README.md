@@ -1,4 +1,4 @@
-# web_pick — 产品挑选列表
+# tire-slist — 产品挑选列表
 
 基于 **Node.js + Vite + React** 的静态前端工程，在 **Windows、macOS、Linux** 上均可开发与运行（不依赖 Bash 或 Unix 专有命令）。
 
