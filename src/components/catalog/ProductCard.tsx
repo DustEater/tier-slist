@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import type { PriceTier, Product } from "../../domain/product";
 import {
@@ -12,11 +13,11 @@ import { formatMoney } from "../../lib/formatMoney";
 
 type Props = {
   product: Product;
-  onTierChange: (tier: PriceTier) => void;
-  onRemove: () => void;
+  onTierChange: (id: string, tier: PriceTier) => void;
+  onRemove: (id: string) => void;
 };
 
-export function ProductCard({ product: p, onTierChange, onRemove }: Props) {
+function ProductCardInner({ product: p, onTierChange, onRemove }: Props) {
   const effectiveTier = pickSelectedTier(p, p.selectedTier);
   const chosenName = tierSlot(p, effectiveTier).name;
   const categoryDisplay = p.categoryName.trim() || "未填写品类";
@@ -38,7 +39,7 @@ export function ProductCard({ product: p, onTierChange, onRemove }: Props) {
               value={effectiveTier}
               aria-label={`${categoryDisplay} · ${chosenName} 选用档位`}
               onChange={(e) =>
-                onTierChange(e.target.value as PriceTier)
+                onTierChange(p.id, e.target.value as PriceTier)
               }
             >
               {filledTiers.map((tier) => (
@@ -58,7 +59,7 @@ export function ProductCard({ product: p, onTierChange, onRemove }: Props) {
             <button
               type="button"
               className="btn btn-sm btn-danger"
-              onClick={onRemove}
+              onClick={() => onRemove(p.id)}
             >
               删除
             </button>
@@ -116,3 +117,6 @@ export function ProductCard({ product: p, onTierChange, onRemove }: Props) {
     </article>
   );
 }
+
+/** 列表项较多时配合稳定回调，可避免无关卡片随父组件重绘。 */
+export const ProductCard = memo(ProductCardInner);

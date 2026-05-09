@@ -1,18 +1,45 @@
+import { useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { DataBackupBar } from "../components/catalog/DataBackupBar";
 import { ProductCard } from "../components/catalog/ProductCard";
 import { groupProductsByArea } from "../catalog/groupByArea";
 import { useProducts } from "../context/ProductsContext";
-import { pickSelectedTier, priceForTier } from "../domain/product";
+import {
+  pickSelectedTier,
+  priceForTier,
+  type PriceTier,
+} from "../domain/product";
 import { formatMoney } from "../lib/formatMoney";
 
 export function ProductList() {
   const { products, removeProduct, updateProduct } = useProducts();
-  const groups = groupProductsByArea(products);
-  const total = products.reduce(
-    (sum, p) =>
-      sum + priceForTier(p, pickSelectedTier(p, p.selectedTier)),
-    0,
+
+  const handleTierChange = useCallback(
+    (id: string, tier: PriceTier) => {
+      updateProduct(id, { selectedTier: tier });
+    },
+    [updateProduct],
+  );
+
+  const handleRemove = useCallback(
+    (id: string) => {
+      removeProduct(id);
+    },
+    [removeProduct],
+  );
+
+  const groups = useMemo(
+    () => groupProductsByArea(products),
+    [products],
+  );
+  const total = useMemo(
+    () =>
+      products.reduce(
+        (sum, p) =>
+          sum + priceForTier(p, pickSelectedTier(p, p.selectedTier)),
+        0,
+      ),
+    [products],
   );
 
   return (
@@ -57,10 +84,8 @@ export function ProductList() {
                   <ProductCard
                     key={p.id}
                     product={p}
-                    onTierChange={(tier) =>
-                      updateProduct(p.id, { selectedTier: tier })
-                    }
-                    onRemove={() => removeProduct(p.id)}
+                    onTierChange={handleTierChange}
+                    onRemove={handleRemove}
                   />
                 ))}
               </div>

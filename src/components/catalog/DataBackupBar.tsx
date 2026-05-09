@@ -1,8 +1,8 @@
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { useProducts } from "../../context/ProductsContext";
 import type { Product } from "../../domain/product";
+import { previewMergeById } from "../../domain/mergeProductsById";
 import { backupDownloadFilename } from "../../lib/backupFilename";
-import { mergeProductsById } from "../../domain/mergeProductsById";
 import {
   parseImportedProductsJson,
   serializeProductsJson,
@@ -85,22 +85,15 @@ export function DataBackupBar({ products }: Props) {
     }
 
     const incoming = parsed.products;
-    const nextCount = incoming.length;
-    const currentIds = new Set(products.map((p) => p.id));
-    let updateCount = 0;
-    let addCount = 0;
-    for (const p of incoming) {
-      if (currentIds.has(p.id)) updateCount += 1;
-      else addCount += 1;
-    }
-    const fileIds = new Set(incoming.map((p) => p.id));
-    const keptCount = products.filter((p) => !fileIds.has(p.id)).length;
-    const merged = mergeProductsById(products, incoming);
-    const totalAfter = merged.length;
+    const rowCount = incoming.length;
+    const { updateCount, addCount, keptCount, totalAfter } = previewMergeById(
+      products,
+      incoming,
+    );
 
     const ok = window.confirm(
       `将按 id 合并导入（写入 localStorage）：\n\n` +
-      `• 文件中 ${nextCount} 条：约 ${updateCount} 条覆盖本地同 id，约 ${addCount} 条为新增；\n` +
+      `• 文件中 ${rowCount} 行（去重后 ${updateCount + addCount} 个 id）：约 ${updateCount} 条覆盖本地同 id，约 ${addCount} 条为新增；\n` +
       `• 本地约 ${keptCount} 条在文件中未出现，将原样保留；\n` +
       `• 合并后预计共 ${totalAfter} 条。\n\n` +
       `同 id 以文件内容为准。建议先导出备份。确定继续？`,
