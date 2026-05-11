@@ -68,10 +68,9 @@ npm run preview
 
 1. 将项目文件夹放到任意位置（例如 `D:\work\tier-slist`）。
 2. 若本机尚未安装 Node.js，请从 [nodejs.org](https://nodejs.org/) 安装 **LTS**，安装时勾选将 Node 加入 **PATH**，装好后**新开**一个终端窗口。
-3. 安装依赖并启动（二选一）：
-   - **推荐**：双击项目根目录下的 **`dev.bat`**（首次会自动执行 `npm install`，随后启动开发服务器）。
-   - 或在 **PowerShell** / **cmd** / **Windows Terminal** 中进入项目目录后执行 `npm install`，再执行 `npm run dev`。
-4. 终端里出现本地地址后（一般为 `http://127.0.0.1:5173`），用 **Edge** 或 **Chrome** 打开即可。
+3. 在 **PowerShell** / **cmd** / **Windows Terminal** 中进入项目目录后执行 `npm install`，安装依赖。
+4. 执行 `npm run dev -- --host` 启动host模式，可以让其他用户一起打开 Web。
+5. 终端里出现本地地址后（一般为 `http://127.0.0.1:5173`），用 **Edge** 或 **Chrome** 打开即可。
 
 ## 其他命令
 
