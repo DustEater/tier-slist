@@ -2,67 +2,109 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
-import { mergeProductsById } from "../domain/mergeProductsById";
 import type { Product } from "../domain/product";
-import { loadProducts, saveProducts } from "../persistence/productsStorage";
-
-function persist(next: Product[]): Product[] {
-  saveProducts(next);
-  return next;
-}
+import {
+  addProduct,
+  createWebSocket,
+  loadProducts,
+  mergeProducts,
+  removeProduct,
+  updateProduct,
+} from "../persistence/productsStorage";
 
 type ProductsContextValue = {
   products: Product[];
   addProduct: (input: Omit<Product, "id">) => void;
   updateProduct: (id: string, patch: Partial<Omit<Product, "id">>) => void;
   removeProduct: (id: string) => void;
-  /** 按 id 与导入列表合并并持久化（同 id 以导入为准，仅本地有的 id 保留）。 */
   mergeProductsFromImport: (incoming: Product[]) => void;
 };
 
 const ProductsContext = createContext<ProductsContextValue | null>(null);
 
 export function ProductsProvider({ children }: { children: ReactNode }) {
-  const [products, setProducts] = useState<Product[]>(() => loadProducts());
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const addProduct = useCallback((input: Omit<Product, "id">) => {
-    const item: Product = { ...input, id: crypto.randomUUID() };
-    setProducts((prev) => persist([...prev, item]));
+  useEffect(() => {
+    let cancelled = false;
+    const fetchProducts = async () => {
+      try {
+        const data = await loadProducts();
+        if (!cancelled) setProducts(data);
+      } catch (error) {
+        console.error("Failed to load products:", error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchProducts();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const updateProduct = useCallback(
-    (id: string, patch: Partial<Omit<Product, "id">>) => {
-      setProducts((prev) =>
-        persist(
-          prev.map((p) => (p.id === id ? { ...p, ...patch } : p)),
-        ),
-      );
+  useEffect(() => {
+    const destroy = createWebSocket((newProducts) => {
+      setProducts(newProducts);
+    });
+    return destroy;
+  }, []);
+
+  const addProductHandler = useCallback(async (input: Omit<Product, "id">) => {
+    try {
+      await addProduct(input);
+    } catch (error) {
+      console.error("Failed to add product:", error);
+    }
+  }, []);
+
+  const updateProductHandler = useCallback(
+    async (id: string, patch: Partial<Omit<Product, "id">>) => {
+      try {
+        await updateProduct(id, patch);
+      } catch (error) {
+        console.error("Failed to update product:", error);
+      }
     },
     [],
   );
 
-  const removeProduct = useCallback((id: string) => {
-    setProducts((prev) => persist(prev.filter((p) => p.id !== id)));
+  const removeProductHandler = useCallback(async (id: string) => {
+    try {
+      await removeProduct(id);
+    } catch (error) {
+      console.error("Failed to remove product:", error);
+    }
   }, []);
 
-  const mergeProductsFromImport = useCallback((incoming: Product[]) => {
-    setProducts((prev) => persist(mergeProductsById(prev, incoming)));
+  const mergeProductsFromImportHandler = useCallback(async (incoming: Product[]) => {
+    try {
+      await mergeProducts(incoming);
+    } catch (error) {
+      console.error("Failed to merge products:", error);
+    }
   }, []);
 
   const value = useMemo(
     () => ({
       products,
-      addProduct,
-      updateProduct,
-      removeProduct,
-      mergeProductsFromImport,
+      addProduct: addProductHandler,
+      updateProduct: updateProductHandler,
+      removeProduct: removeProductHandler,
+      mergeProductsFromImport: mergeProductsFromImportHandler,
     }),
-    [products, addProduct, updateProduct, removeProduct, mergeProductsFromImport],
+    [products, addProductHandler, updateProductHandler, removeProductHandler, mergeProductsFromImportHandler],
   );
+
+  if (loading) {
+    return <div>加载中...</div>;
+  }
 
   return (
     <ProductsContext.Provider value={value}>{children}</ProductsContext.Provider>
