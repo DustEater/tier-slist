@@ -27,6 +27,12 @@ type ProductsContextValue = {
 
 const ProductsContext = createContext<ProductsContextValue | null>(null);
 
+function createErrorHandler(action: string) {
+  return (error: unknown) => {
+    console.error(`Failed to ${action}:`, error);
+  };
+}
+
 export function ProductsProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +44,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
         const data = await loadProducts();
         if (!cancelled) setProducts(data);
       } catch (error) {
-        console.error("Failed to load products:", error);
+        createErrorHandler("load products")(error);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -60,7 +66,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     try {
       await addProduct(input);
     } catch (error) {
-      console.error("Failed to add product:", error);
+      createErrorHandler("add product")(error);
     }
   }, []);
 
@@ -69,7 +75,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       try {
         await updateProduct(id, patch);
       } catch (error) {
-        console.error("Failed to update product:", error);
+        createErrorHandler("update product")(error);
       }
     },
     [],
@@ -79,7 +85,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     try {
       await removeProduct(id);
     } catch (error) {
-      console.error("Failed to remove product:", error);
+      createErrorHandler("remove product")(error);
     }
   }, []);
 
@@ -87,7 +93,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     try {
       await mergeProducts(incoming);
     } catch (error) {
-      console.error("Failed to merge products:", error);
+      createErrorHandler("merge products")(error);
     }
   }, []);
 

@@ -20,6 +20,23 @@ let products: Product[] = [];
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let pendingSave = false;
 
+function ensureDataDir(): void {
+  const dir = path.dirname(CACHE_FILE);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+function saveToFile(logMessage: string): void {
+  try {
+    ensureDataDir();
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(products, null, 2));
+    console.log(logMessage);
+  } catch (error) {
+    console.error("Failed to save cache file:", error);
+  }
+}
+
 function loadFromFile(): void {
   try {
     if (fs.existsSync(CACHE_FILE)) {
@@ -43,16 +60,7 @@ function scheduleSave(): void {
     saveTimer = null;
     if (!pendingSave) return;
     pendingSave = false;
-    try {
-      const dir = path.dirname(CACHE_FILE);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      fs.writeFileSync(CACHE_FILE, JSON.stringify(products, null, 2));
-      console.log("Saved products to cache file");
-    } catch (error) {
-      console.error("Failed to save cache file:", error);
-    }
+    saveToFile("Saved products to cache file");
   }, SAVE_DEBOUNCE_MS);
 }
 
@@ -63,16 +71,7 @@ function flushSaveSync(): void {
   }
   if (!pendingSave) return;
   pendingSave = false;
-  try {
-    const dir = path.dirname(CACHE_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(CACHE_FILE, JSON.stringify(products, null, 2));
-    console.log("Saved products to cache file (flush)");
-  } catch (error) {
-    console.error("Failed to save cache file:", error);
-  }
+  saveToFile("Saved products to cache file (flush)");
 }
 
 function broadcastUpdate(): void {
@@ -149,10 +148,10 @@ function normalizeProduct(x: unknown): Product | null {
 }
 
 function isNestedTierShape(o: Record<string, unknown>): boolean {
-  return isTierSlotObj(o.economy) && isTierSlotObj(o.mid) && isTierSlotObj(o.high);
+  return isTierSlot(o.economy) && isTierSlot(o.mid) && isTierSlot(o.high);
 }
 
-function isTierSlotObj(x: unknown): boolean {
+function isTierSlot(x: unknown): boolean {
   if (x === null || typeof x !== "object") return false;
   const s = x as Record<string, unknown>;
   return typeof s.name === "string" && typeof s.price === "number" && Number.isFinite(s.price) && s.price >= 0 && typeof s.purchaseUrl === "string";
@@ -210,31 +209,22 @@ function validateProductInput(body: unknown): body is Omit<Product, "id"> {
     typeof o.area === "string" &&
     typeof o.categoryName === "string" &&
     typeof o.selectedTier === "string" &&
-    isTierSlotLike(o.economy) &&
-    isTierSlotLike(o.mid) &&
-    isTierSlotLike(o.high)
+    isTierSlot(o.economy) &&
+    isTierSlot(o.mid) &&
+    isTierSlot(o.high)
   );
-}
-
-function isTierSlotLike(x: unknown): boolean {
-  if (x === null || typeof x !== "object") return false;
-  const s = x as Record<string, unknown>;
-  return typeof s.name === "string" && typeof s.price === "number" && typeof s.purchaseUrl === "string";
 }
 
 loadFromFile();
 
-process.on("SIGINT", () => {
-  console.log("\nSaving cache before exit...");
+function handleShutdown(signal: string): void {
+  console.log(`\n${signal}: Saving cache before exit...`);
   flushSaveSync();
   process.exit(0);
-});
+}
 
-process.on("SIGTERM", () => {
-  console.log("\nSaving cache before exit...");
-  flushSaveSync();
-  process.exit(0);
-});
+process.on("SIGINT", () => handleShutdown("SIGINT"));
+process.on("SIGTERM", () => handleShutdown("SIGTERM"));
 
 app.get("/api/products", (_req, res) => {
   res.json(products);
