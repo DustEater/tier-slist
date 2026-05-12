@@ -117,61 +117,17 @@ function normalizeProduct(x: unknown): Product | null {
   const o = x as Record<string, unknown>;
   if (typeof o.id !== "string") return null;
 
-  if (isNestedTierShape(o)) {
-    return ensureValidSelectedTier({
-      id: o.id,
-      area:
-        typeof o.area === "string" && o.area.trim() ? o.area.trim() : "未分类",
-      categoryName:
-        typeof o.categoryName === "string" ? o.categoryName.trim() : "",
-      economy: normalizeSlot(o.economy as TierSlot),
-      mid: normalizeSlot(o.mid as TierSlot),
-      high: normalizeSlot(o.high as TierSlot),
-      selectedTier: parseSelectedTier(o.selectedTier),
-    });
-  }
+  if (!isNestedTierShape(o)) return null;
 
-  if (typeof o.name !== "string") return null;
-
-  if (isOldFlatPricesShape(o)) {
-    const url =
-      typeof o.purchaseUrl === "string" ? o.purchaseUrl.trim() : "";
-    const name = o.name.trim() || "未命名";
-    const slot = (price: number): TierSlot => ({
-      name,
-      price: Math.max(0, price),
-      purchaseUrl: url,
-    });
-    return ensureValidSelectedTier({
-      id: o.id,
-      area:
-        typeof o.area === "string" && o.area.trim() ? o.area.trim() : "未分类",
-      categoryName: name,
-      economy: slot(o.priceEconomy as number),
-      mid: slot(o.priceMid as number),
-      high: slot(o.priceHigh as number),
-      selectedTier: parseSelectedTier(o.selectedTier),
-    });
-  }
-
-  if (typeof o.unitPrice === "number" && Number.isFinite(o.unitPrice)) {
-    const u = Math.max(0, o.unitPrice);
-    const name = o.name.trim() || "未命名";
-    const url =
-      typeof o.purchaseUrl === "string" ? o.purchaseUrl.trim() : "";
-    const slot = (): TierSlot => ({ name, price: u, purchaseUrl: url });
-    return ensureValidSelectedTier({
-      id: o.id,
-      area: "未分类",
-      categoryName: name,
-      economy: slot(),
-      mid: slot(),
-      high: slot(),
-      selectedTier: "mid",
-    });
-  }
-
-  return null;
+  return ensureValidSelectedTier({
+    id: o.id,
+    area: typeof o.area === "string" && o.area.trim() ? o.area.trim() : "未分类",
+    categoryName: typeof o.categoryName === "string" ? o.categoryName.trim() : "",
+    economy: normalizeSlot(o.economy as TierSlot),
+    mid: normalizeSlot(o.mid as TierSlot),
+    high: normalizeSlot(o.high as TierSlot),
+    selectedTier: parseSelectedTier(o.selectedTier),
+  });
 }
 
 function isNestedTierShape(
@@ -182,11 +138,7 @@ function isNestedTierShape(
   high: unknown;
   selectedTier: unknown;
 } {
-  return (
-    isTierSlotObj(o.economy) &&
-    isTierSlotObj(o.mid) &&
-    isTierSlotObj(o.high)
-  );
+  return isTierSlotObj(o.economy) && isTierSlotObj(o.mid) && isTierSlotObj(o.high);
 }
 
 function isTierSlotObj(x: unknown): x is TierSlot {
@@ -203,39 +155,12 @@ function isTierSlotObj(x: unknown): x is TierSlot {
 
 function normalizeSlot(s: TierSlot): TierSlot {
   const name = typeof s.name === "string" ? s.name.trim() : "";
-  const purchaseUrl =
-    typeof s.purchaseUrl === "string" ? s.purchaseUrl.trim() : "";
+  const purchaseUrl = typeof s.purchaseUrl === "string" ? s.purchaseUrl.trim() : "";
   if (!name) {
     return { name: "", price: 0, purchaseUrl: "" };
   }
-  const price =
-    typeof s.price === "number" && Number.isFinite(s.price) && s.price >= 0
-      ? s.price
-      : 0;
+  const price = typeof s.price === "number" && Number.isFinite(s.price) && s.price >= 0 ? s.price : 0;
   return { name, price, purchaseUrl };
-}
-
-function isOldFlatPricesShape(
-  o: Record<string, unknown>,
-): o is Record<string, unknown> & {
-  name: string;
-  priceEconomy: number;
-  priceMid: number;
-  priceHigh: number;
-  selectedTier: unknown;
-  purchaseUrl?: unknown;
-} {
-  return (
-    typeof o.priceEconomy === "number" &&
-    Number.isFinite(o.priceEconomy) &&
-    o.priceEconomy >= 0 &&
-    typeof o.priceMid === "number" &&
-    Number.isFinite(o.priceMid) &&
-    o.priceMid >= 0 &&
-    typeof o.priceHigh === "number" &&
-    Number.isFinite(o.priceHigh) &&
-    o.priceHigh >= 0
-  );
 }
 
 function parseSelectedTier(x: unknown): PriceTier {

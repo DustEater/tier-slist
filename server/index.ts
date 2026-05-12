@@ -115,7 +115,9 @@ function deleteProductCore(id: string): boolean {
 }
 
 function mergeProductsCore(incoming: Product[]): Product[] {
-  for (const product of incoming) {
+  for (const raw of incoming) {
+    const product = normalizeProduct(raw);
+    if (!product) continue;
     const index = findProductIndex(product.id);
     if (index !== -1) {
       products[index] = product;
@@ -126,6 +128,79 @@ function mergeProductsCore(incoming: Product[]): Product[] {
   scheduleSave();
   broadcastUpdate();
   return products;
+}
+
+function normalizeProduct(x: unknown): Product | null {
+  if (x === null || typeof x !== "object") return null;
+  const o = x as Record<string, unknown>;
+  if (typeof o.id !== "string") return null;
+
+  if (!isNestedTierShape(o)) return null;
+
+  return ensureValidSelectedTier({
+    id: o.id,
+    area: typeof o.area === "string" && o.area.trim() ? o.area.trim() : "未分类",
+    categoryName: typeof o.categoryName === "string" ? o.categoryName.trim() : "",
+    economy: normalizeSlot(o.economy as any),
+    mid: normalizeSlot(o.mid as any),
+    high: normalizeSlot(o.high as any),
+    selectedTier: parseSelectedTier(o.selectedTier),
+  });
+}
+
+function isNestedTierShape(o: Record<string, unknown>): boolean {
+  return isTierSlotObj(o.economy) && isTierSlotObj(o.mid) && isTierSlotObj(o.high);
+}
+
+function isTierSlotObj(x: unknown): boolean {
+  if (x === null || typeof x !== "object") return false;
+  const s = x as Record<string, unknown>;
+  return typeof s.name === "string" && typeof s.price === "number" && Number.isFinite(s.price) && s.price >= 0 && typeof s.purchaseUrl === "string";
+}
+
+function normalizeSlot(s: any): any {
+  const name = typeof s.name === "string" ? s.name.trim() : "";
+  const purchaseUrl = typeof s.purchaseUrl === "string" ? s.purchaseUrl.trim() : "";
+  if (!name) {
+    return { name: "", price: 0, purchaseUrl: "" };
+  }
+  const price = typeof s.price === "number" && Number.isFinite(s.price) && s.price >= 0 ? s.price : 0;
+  return { name, price, purchaseUrl };
+}
+
+function parseSelectedTier(x: unknown): "economy" | "mid" | "high" {
+  if (typeof x === "string" && ["economy", "mid", "high"].includes(x)) {
+    return x as any;
+  }
+  return "mid";
+}
+
+function ensureValidSelectedTier(p: Product): Product {
+  const { economy, mid, high, selectedTier } = p;
+  const chosenTier = pickSelectedTier({ economy, mid, high }, selectedTier);
+  if (chosenTier === selectedTier) return p;
+  return { ...p, selectedTier: chosenTier };
+}
+
+function pickSelectedTier(
+  slots: Pick<Product, "economy" | "mid" | "high">,
+  preferred: "economy" | "mid" | "high"
+): "economy" | "mid" | "high" {
+  const chosen = slots[preferred];
+  if (isTierFilled(chosen)) return preferred;
+  const first = firstFilledTier(slots);
+  return first ?? preferred;
+}
+
+function firstFilledTier(slots: Pick<Product, "economy" | "mid" | "high">): "economy" | "mid" | "high" | null {
+  if (isTierFilled(slots.economy)) return "economy";
+  if (isTierFilled(slots.mid)) return "mid";
+  if (isTierFilled(slots.high)) return "high";
+  return null;
+}
+
+function isTierFilled(s: any): boolean {
+  return s.name.trim().length > 0;
 }
 
 function validateProductInput(body: unknown): body is Omit<Product, "id"> {
