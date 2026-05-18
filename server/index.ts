@@ -10,15 +10,12 @@ import type { Product } from "../src/domain/product";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CACHE_FILE = path.join(__dirname, "../data/products.json");
 const PORT = 3001;
-const SAVE_DEBOUNCE_MS = 500;
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 let products: Product[] = [];
-let saveTimer: ReturnType<typeof setTimeout> | null = null;
-let pendingSave = false;
 
 function ensureDataDir(): void {
   const dir = path.dirname(CACHE_FILE);
@@ -27,11 +24,11 @@ function ensureDataDir(): void {
   }
 }
 
-function saveToFile(logMessage: string): void {
+function saveToFile(): void {
   try {
     ensureDataDir();
     fs.writeFileSync(CACHE_FILE, JSON.stringify(products, null, 2));
-    console.log(logMessage);
+    console.log("Saved products to cache file");
   } catch (error) {
     console.error("Failed to save cache file:", error);
   }
@@ -45,33 +42,10 @@ function loadFromFile(): void {
       console.log(`Loaded ${products.length} products from cache`);
     } else {
       products = [];
-      scheduleSave();
     }
   } catch (error) {
     console.error("Failed to load cache file:", error);
-    products = [];
   }
-}
-
-function scheduleSave(): void {
-  pendingSave = true;
-  if (saveTimer !== null) return;
-  saveTimer = setTimeout(() => {
-    saveTimer = null;
-    if (!pendingSave) return;
-    pendingSave = false;
-    saveToFile("Saved products to cache file");
-  }, SAVE_DEBOUNCE_MS);
-}
-
-function flushSaveSync(): void {
-  if (saveTimer !== null) {
-    clearTimeout(saveTimer);
-    saveTimer = null;
-  }
-  if (!pendingSave) return;
-  pendingSave = false;
-  saveToFile("Saved products to cache file (flush)");
 }
 
 function broadcastUpdate(): void {
@@ -206,7 +180,7 @@ loadFromFile();
 
 function handleShutdown(signal: string): void {
   console.log(`\n${signal}: Saving cache before exit...`);
-  flushSaveSync();
+  saveToFile();
   process.exit(0);
 }
 
@@ -249,7 +223,7 @@ app.post("/api/products/replace", (req, res) => {
 });
 
 app.post("/api/products/save", (_req, res) => {
-  flushSaveSync();
+  saveToFile();
   res.json({ ok: true });
 });
 
