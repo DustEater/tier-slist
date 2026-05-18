@@ -12,8 +12,9 @@ import {
   addProduct,
   createWebSocket,
   loadProducts,
-  mergeProducts,
   removeProduct,
+  replaceProducts,
+  saveProductsToFile,
   updateProduct,
 } from "../persistence/productsStorage";
 
@@ -22,7 +23,8 @@ type ProductsContextValue = {
   addProduct: (input: Omit<Product, "id">) => void;
   updateProduct: (id: string, patch: Partial<Omit<Product, "id">>) => void;
   removeProduct: (id: string) => void;
-  mergeProductsFromImport: (incoming: Product[]) => void;
+  replaceProductsFromImport: (incoming: Product[]) => void;
+  saveToDisk: () => Promise<void>;
 };
 
 const ProductsContext = createContext<ProductsContextValue | null>(null);
@@ -89,11 +91,19 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const mergeProductsFromImportHandler = useCallback(async (incoming: Product[]) => {
+  const replaceProductsFromImportHandler = useCallback(async (incoming: Product[]) => {
     try {
-      await mergeProducts(incoming);
+      await replaceProducts(incoming);
     } catch (error) {
-      createErrorHandler("merge products")(error);
+      createErrorHandler("replace products")(error);
+    }
+  }, []);
+
+  const saveToDiskHandler = useCallback(async () => {
+    try {
+      await saveProductsToFile();
+    } catch (error) {
+      createErrorHandler("save products to file")(error);
     }
   }, []);
 
@@ -103,9 +113,10 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
       addProduct: addProductHandler,
       updateProduct: updateProductHandler,
       removeProduct: removeProductHandler,
-      mergeProductsFromImport: mergeProductsFromImportHandler,
+      replaceProductsFromImport: replaceProductsFromImportHandler,
+      saveToDisk: saveToDiskHandler,
     }),
-    [products, addProductHandler, updateProductHandler, removeProductHandler, mergeProductsFromImportHandler],
+    [products, addProductHandler, updateProductHandler, removeProductHandler, replaceProductsFromImportHandler, saveToDiskHandler],
   );
 
   if (loading) {

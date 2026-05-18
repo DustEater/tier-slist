@@ -90,7 +90,6 @@ function findProductIndex(id: string): number {
 function addProductCore(input: Omit<Product, "id">): Product {
   const product: Product = { ...input, id: crypto.randomUUID() };
   products.push(product);
-  scheduleSave();
   broadcastUpdate();
   return product;
 }
@@ -99,7 +98,6 @@ function updateProductCore(id: string, patch: Partial<Omit<Product, "id">>): Pro
   const index = findProductIndex(id);
   if (index === -1) return null;
   products[index] = { ...products[index], ...patch };
-  scheduleSave();
   broadcastUpdate();
   return products[index];
 }
@@ -108,23 +106,12 @@ function deleteProductCore(id: string): boolean {
   const prevLength = products.length;
   products = products.filter((p) => p.id !== id);
   if (products.length === prevLength) return false;
-  scheduleSave();
   broadcastUpdate();
   return true;
 }
 
-function mergeProductsCore(incoming: Product[]): Product[] {
-  for (const raw of incoming) {
-    const product = normalizeProduct(raw);
-    if (!product) continue;
-    const index = findProductIndex(product.id);
-    if (index !== -1) {
-      products[index] = product;
-    } else {
-      products.push(product);
-    }
-  }
-  scheduleSave();
+function replaceProductsCore(incoming: Product[]): Product[] {
+  products = incoming;
   broadcastUpdate();
   return products;
 }
@@ -253,12 +240,17 @@ app.delete("/api/products/:id", (req, res) => {
   res.sendStatus(204);
 });
 
-app.post("/api/products/merge", (req, res) => {
+app.post("/api/products/replace", (req, res) => {
   if (!Array.isArray(req.body)) {
     return res.status(400).json({ error: "Body must be an array of products" });
   }
-  const merged = mergeProductsCore(req.body);
-  res.json(merged);
+  replaceProductsCore(req.body);
+  res.json(products);
+});
+
+app.post("/api/products/save", (_req, res) => {
+  flushSaveSync();
+  res.json({ ok: true });
 });
 
 const server = http.createServer(app);
@@ -283,9 +275,9 @@ wss.on("connection", (ws) => {
         case "delete":
           deleteProductCore(data.payload);
           break;
-        case "merge":
+        case "replace":
           if (Array.isArray(data.payload)) {
-            mergeProductsCore(data.payload);
+            replaceProductsCore(data.payload);
           }
           break;
       }

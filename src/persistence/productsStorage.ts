@@ -70,11 +70,15 @@ export async function removeProduct(id: string): Promise<void> {
   return apiFetch<void>(`/products/${id}`, { method: "DELETE" });
 }
 
-export async function mergeProducts(incoming: Product[]): Promise<Product[]> {
-  return apiFetch<Product[]>("/products/merge", {
+export async function replaceProducts(incoming: Product[]): Promise<Product[]> {
+  return apiFetch<Product[]>("/products/replace", {
     method: "POST",
     body: JSON.stringify(incoming),
   });
+}
+
+export async function saveProductsToFile(): Promise<{ ok: boolean }> {
+  return apiFetch<{ ok: boolean }>("/products/save", { method: "POST" });
 }
 
 export function serializeProductsJson(products: Product[]): string {

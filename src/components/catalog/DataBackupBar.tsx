@@ -1,7 +1,6 @@
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { useProducts } from "../../context/ProductsContext";
 import type { Product } from "../../domain/product";
-import { previewMergeById } from "../../domain/mergeProductsById";
 import { backupDownloadFilename } from "../../lib/backupFilename";
 import {
   parseImportedProductsJson,
@@ -13,9 +12,9 @@ type Props = {
 };
 
 export function DataBackupBar({ products }: Props) {
-  const { mergeProductsFromImport } = useProducts();
+  const { replaceProductsFromImport, saveToDisk } = useProducts();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const noticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const noticeTimerRef = useRef<number | null>(null);
   const [notice, setNotice] = useState<{
     kind: "success" | "error";
     text: string;
@@ -24,14 +23,14 @@ export function DataBackupBar({ products }: Props) {
   useEffect(() => {
     return () => {
       if (noticeTimerRef.current !== null) {
-        clearTimeout(noticeTimerRef.current);
+        window.clearTimeout(noticeTimerRef.current);
       }
     };
   }, []);
 
   function dismissNoticeLater(ms: number) {
     if (noticeTimerRef.current !== null) {
-      clearTimeout(noticeTimerRef.current);
+      window.clearTimeout(noticeTimerRef.current);
     }
     noticeTimerRef.current = window.setTimeout(() => {
       noticeTimerRef.current = null;
@@ -39,7 +38,8 @@ export function DataBackupBar({ products }: Props) {
     }, ms);
   }
 
-  function handleExport() {
+  async function handleExport() {
+    await saveToDisk();
     const json = serializeProductsJson(products);
     const blob = new Blob([json], {
       type: "application/json;charset=utf-8",
@@ -55,10 +55,19 @@ export function DataBackupBar({ products }: Props) {
       kind: "success",
       text:
         products.length === 0
-          ? "已导出空列表（[]），可在新环境导入后作为起点。"
-          : `已导出 ${products.length} 条记录到下载目录。`,
+          ? "已保存到服务端并导出空列表（[]），可在新环境导入后作为起点。"
+          : `已保存到服务端并导出 ${products.length} 条记录到下载目录。`,
     });
     dismissNoticeLater(4500);
+  }
+
+  async function handleSave() {
+    await saveToDisk();
+    setNotice({
+      kind: "success",
+      text: `已保存 ${products.length} 条记录到本地文件。`,
+    });
+    dismissNoticeLater(3000);
   }
 
   function openFilePicker() {
@@ -85,25 +94,19 @@ export function DataBackupBar({ products }: Props) {
     }
 
     const incoming = parsed.products;
-    const rowCount = incoming.length;
-    const { updateCount, addCount, keptCount, totalAfter } = previewMergeById(
-      products,
-      incoming,
-    );
 
     const ok = window.confirm(
-      `将按 id 合并导入（写入 localStorage）：\n\n` +
-      `• 文件中 ${rowCount} 行（去重后 ${updateCount + addCount} 个 id）：约 ${updateCount} 条覆盖本地同 id，约 ${addCount} 条为新增；\n` +
-      `• 本地约 ${keptCount} 条在文件中未出现，将原样保留；\n` +
-      `• 合并后预计共 ${totalAfter} 条。\n\n` +
-      `同 id 以文件内容为准。建议先导出备份。确定继续？`,
+      `将直接替换现有数据：\n\n` +
+      `• 文件中 ${incoming.length} 条记录将完全替换当前 ${products.length} 条记录；\n` +
+      `• 当前数据将全部丢失，建议先导出备份。\n\n` +
+      `确定继续？`,
     );
     if (!ok) return;
 
-    mergeProductsFromImport(incoming);
+    replaceProductsFromImport(incoming);
     setNotice({
       kind: "success",
-      text: `已合并：覆盖/更新 ${updateCount} 条、新增 ${addCount} 条，保留本地独有 ${keptCount} 条；当前共 ${totalAfter} 条。`,
+      text: `已替换：导入 ${incoming.length} 条记录，替换原有 ${products.length} 条。`,
     });
     dismissNoticeLater(5000);
   }
@@ -125,6 +128,13 @@ export function DataBackupBar({ products }: Props) {
           <button
             type="button"
             className="btn btn-ghost btn-sm"
+            onClick={handleSave}
+          >
+            保存
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
             onClick={handleExport}
           >
             导出 JSON
@@ -139,7 +149,7 @@ export function DataBackupBar({ products }: Props) {
         </div>
       </div>
       <p className="catalog-data-hint">
-        导出文件与浏览器内存储格式一致；导入按 id 合并（同 id 以文件为准，文件中未出现的本地记录保留），请先导出备份。
+        导出会同时保存到服务端本地文件；导入将直接替换现有全部数据，请先导出备份。
       </p>
       {notice ? (
         <p
@@ -149,10 +159,11 @@ export function DataBackupBar({ products }: Props) {
               : "catalog-data-notice catalog-data-notice-success"
           }
           role="status"
-        >
-          {notice.text}
+        >  
+           {notice.text}
         </p>
-      ) : null}
-    </div>
+        ) : null}
+      </div>
   );
+      
 }
