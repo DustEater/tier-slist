@@ -116,6 +116,7 @@ export async function createServer(config?: ServerConfig): Promise<{ server: htt
       mid: normalizeSlot(o.mid as any),
       high: normalizeSlot(o.high as any),
       selectedTier: parseSelectedTier(o.selectedTier),
+      scene: typeof o.scene === "string" && o.scene.trim() ? o.scene.trim() : "home",
     });
   }
 
@@ -126,17 +127,18 @@ export async function createServer(config?: ServerConfig): Promise<{ server: htt
   function isTierSlot(x: unknown): boolean {
     if (x === null || typeof x !== "object") return false;
     const s = x as Record<string, unknown>;
-    return typeof s.name === "string" && typeof s.price === "number" && Number.isFinite(s.price) && s.price >= 0 && typeof s.purchaseUrl === "string";
+    return typeof s.name === "string" && typeof s.price === "number" && Number.isFinite(s.price) && s.price >= 0 && typeof s.purchaseUrl === "string" && typeof s.spec === "string";
   }
 
   function normalizeSlot(s: any): any {
     const name = typeof s.name === "string" ? s.name.trim() : "";
     const purchaseUrl = typeof s.purchaseUrl === "string" ? s.purchaseUrl.trim() : "";
+    const spec = typeof s.spec === "string" ? s.spec.trim() : "";
     if (!name) {
-      return { name: "", price: 0, purchaseUrl: "" };
+      return { name: "", price: 0, purchaseUrl: "", spec: "" };
     }
     const price = typeof s.price === "number" && Number.isFinite(s.price) && s.price >= 0 ? s.price : 0;
-    return { name, price, purchaseUrl };
+    return { name, price, purchaseUrl, spec };
   }
 
   function parseSelectedTier(x: unknown): "economy" | "mid" | "high" {
@@ -181,6 +183,7 @@ export async function createServer(config?: ServerConfig): Promise<{ server: htt
       typeof o.area === "string" &&
       typeof o.categoryName === "string" &&
       typeof o.selectedTier === "string" &&
+      typeof o.scene === "string" &&
       isTierSlot(o.economy) &&
       isTierSlot(o.mid) &&
       isTierSlot(o.high)

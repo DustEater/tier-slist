@@ -110,6 +110,12 @@ function ProductCardInner({ product: p, onTierChange, onRemove }: Props) {
                   s.name
                 )}
               </div>
+              {s.spec ? (
+                <>
+                  <div className="tier-panel-sublabel">规格</div>
+                  <div className="tier-panel-spec">{s.spec}</div>
+                </>
+              ) : null}
               <div className="tier-panel-price">
                 {empty ? (
                   <span className="muted">—</span>

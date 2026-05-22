@@ -17,9 +17,11 @@ export type TierSlot = {
   price: number;
   /** 可选，空字符串表示无链接 */
   purchaseUrl: string;
+  /** 规格/参数，如 CPU「6核12线程 / 4.7GHz」；留空表示不填 */
+  spec: string;
 };
 
-/** 区域下拉常用项（与「其他」配合） */
+/** 区域下拉常用项（与「其他」配合）—— 已废弃，请使用 scene.ts 中的场景感知预设 */
 export const AREA_PRESETS = [
   "客厅",
   "卧室",
@@ -40,6 +42,8 @@ export type Product = {
   high: TierSlot;
   /** 计入合计时使用的档位 */
   selectedTier: PriceTier;
+  /** 所属场景（home / pc-build / 自定义），用于数据隔离 */
+  scene: string;
 };
 
 export function tierSlot(p: Product, tier: PriceTier): TierSlot {

@@ -2,17 +2,30 @@ import { useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { DataBackupBar } from "../components/catalog/DataBackupBar";
 import { ProductCard } from "../components/catalog/ProductCard";
+import { SceneSwitcher } from "../components/SceneSwitcher";
 import { groupProductsByArea } from "../catalog/groupByArea";
 import { useProducts } from "../context/ProductsContext";
+import { useScene } from "../context/SceneContext";
 import {
   pickSelectedTier,
   priceForTier,
   type PriceTier,
 } from "../domain/product";
+import {
+  getSceneTitle,
+  getSceneSubtitle,
+  getSceneItemName,
+} from "../domain/scene";
 import { formatMoney } from "../lib/formatMoney";
 
 export function ProductList() {
   const { products, removeProduct, updateProduct } = useProducts();
+  const { scene } = useScene();
+
+  const sceneProducts = useMemo(
+    () => products.filter((p) => (p.scene || "home") === scene),
+    [products, scene],
+  );
 
   const handleTierChange = useCallback(
     (id: string, tier: PriceTier) => {
@@ -29,46 +42,51 @@ export function ProductList() {
   );
 
   const groups = useMemo(
-    () => groupProductsByArea(products),
-    [products],
+    () => groupProductsByArea(sceneProducts, scene),
+    [sceneProducts, scene],
   );
   const total = useMemo(
     () =>
-      products.reduce(
+      sceneProducts.reduce(
         (sum, p) =>
           sum + priceForTier(p, pickSelectedTier(p, p.selectedTier)),
         0,
       ),
-    [products],
+    [sceneProducts],
   );
+
+  const itemName = getSceneItemName(scene);
+  const addLabel = `添加${itemName}`;
 
   return (
     <div className="page page-catalog">
+      <SceneSwitcher />
+
       <header className="catalog-header">
         <div className="catalog-header-inner">
           <div className="catalog-title-block">
-            <h1>商品统计单</h1>
+            <h1>{getSceneTitle(scene)}</h1>
             <p className="catalog-subtitle">
-              每条记录有品类名（如鼠标），各档位再填具体商品名（如雷蛇、罗技）；选用档位参与合计。
+              {getSceneSubtitle(scene)}
             </p>
           </div>
           <div className="catalog-header-actions">
             <Link className="btn btn-primary btn-lg" to="/add">
-              添加产品
+              {addLabel}
             </Link>
           </div>
         </div>
         <DataBackupBar products={products} />
       </header>
 
-      {products.length === 0 ? (
+      {sceneProducts.length === 0 ? (
         <div className="empty-catalog empty-catalog-cta" role="status">
-          <p className="empty-catalog-title">暂无产品</p>
+          <p className="empty-catalog-title">暂无{itemName}</p>
           <p className="empty-catalog-text">
-            点击「添加产品」填写品类名与各档位商品名、价格、链接；也可先「导出 JSON」得到空列表文件，在别处编辑后再导入。
+            点击「{addLabel}」填写品类名与各档位商品名、价格、链接；也可先「导出 JSON」得到空列表文件，在别处编辑后再导入。
           </p>
           <Link className="btn btn-primary btn-lg" to="/add">
-            添加产品
+            {addLabel}
           </Link>
         </div>
       ) : (
@@ -94,7 +112,7 @@ export function ProductList() {
         </main>
       )}
 
-      {products.length > 0 && (
+      {sceneProducts.length > 0 && (
         <footer className="footer-total footer-total-catalog">
           <span>合计（按选用档位）</span>
           <strong>{formatMoney(total)}</strong>

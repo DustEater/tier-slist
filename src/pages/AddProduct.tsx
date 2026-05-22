@@ -1,8 +1,10 @@
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { SceneSwitcher } from "../components/SceneSwitcher";
 import { TierFieldsSection } from "../components/forms/TierFieldsSection";
 import { useProducts } from "../context/ProductsContext";
-import { AREA_PRESETS, pickSelectedTier, type PriceTier } from "../domain/product";
+import { useScene } from "../context/SceneContext";
+import { pickSelectedTier, type PriceTier } from "../domain/product";
 import {
   emptyTierFormState,
   OTHER_AREA,
@@ -10,13 +12,21 @@ import {
   type AreaPresetValue,
   type TierFormState,
 } from "../domain/productForm";
+import {
+  getAreaPresets,
+  getSceneAddTitle,
+  getSceneCategoryPlaceholder,
+} from "../domain/scene";
 
-type TierField = "name" | "price" | "url";
+type TierField = "name" | "price" | "url" | "spec";
 
 export function AddProduct() {
   const navigate = useNavigate();
   const { addProduct } = useProducts();
-  const [areaPreset, setAreaPreset] = useState<AreaPresetValue>("客厅");
+  const { scene } = useScene();
+  const areaPresets = getAreaPresets(scene);
+  const defaultPreset = areaPresets.length > 0 ? areaPresets[0] : OTHER_AREA;
+  const [areaPreset, setAreaPreset] = useState<AreaPresetValue>(defaultPreset);
   const [areaOther, setAreaOther] = useState("");
   const [categoryName, setCategoryName] = useState("");
   const [tiers, setTiers] = useState<TierFormState>(() => emptyTierFormState());
@@ -47,7 +57,7 @@ export function AddProduct() {
 
     const cat = categoryName.trim();
     if (!cat) {
-      setError("请填写品类名（如：鼠标、床垫）。");
+      setError("请填写品类名。");
       return;
     }
 
@@ -73,6 +83,7 @@ export function AddProduct() {
       mid: parsed.mid,
       high: parsed.high,
       selectedTier: selectedResolved,
+      scene,
     });
     navigate("/", { replace: true });
   }
@@ -80,11 +91,13 @@ export function AddProduct() {
   return (
     <div className="page">
       <header className="header">
-        <h1>添加产品</h1>
+        <h1>{getSceneAddTitle(scene)}</h1>
         <Link className="btn btn-ghost" to="/">
           返回列表
         </Link>
       </header>
+
+      <SceneSwitcher />
 
       <form className="form-card form-card-wide" onSubmit={handleSubmit}>
         {error && <p className="form-error">{error}</p>}
@@ -98,11 +111,15 @@ export function AddProduct() {
               setAreaPreset(e.target.value as AreaPresetValue)
             }
           >
-            {AREA_PRESETS.map((a) => (
-              <option key={a} value={a}>
-                {a}
-              </option>
-            ))}
+            {areaPresets.length > 0 ? (
+              areaPresets.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))
+            ) : (
+              <option value="">请选择或自定义</option>
+            )}
             <option value={OTHER_AREA}>其他（自定义）</option>
           </select>
         </label>
@@ -126,7 +143,7 @@ export function AddProduct() {
             type="text"
             value={categoryName}
             onChange={(e) => setCategoryName(e.target.value)}
-            placeholder="例如：鼠标、智能马桶（区别于下面各档的商品名）"
+            placeholder={getSceneCategoryPlaceholder(scene)}
             autoComplete="off"
           />
         </label>

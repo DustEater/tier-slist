@@ -2,7 +2,8 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { TierFieldsSection } from "../components/forms/TierFieldsSection";
 import { useProducts } from "../context/ProductsContext";
-import { AREA_PRESETS, pickSelectedTier, type PriceTier } from "../domain/product";
+import { useScene } from "../context/SceneContext";
+import { pickSelectedTier, type PriceTier } from "../domain/product";
 import {
   areaToFormState,
   emptyTierFormState,
@@ -12,13 +13,16 @@ import {
   type AreaPresetValue,
   type TierFormState,
 } from "../domain/productForm";
+import { getAreaPresets } from "../domain/scene";
 
-type TierField = "name" | "price" | "url";
+type TierField = "name" | "price" | "url" | "spec";
 
 export function EditProduct() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { products, updateProduct } = useProducts();
+  const { scene } = useScene();
+  const areaPresets = getAreaPresets(scene);
 
   const [areaPreset, setAreaPreset] = useState<AreaPresetValue>("客厅");
   const [areaOther, setAreaOther] = useState("");
@@ -62,8 +66,8 @@ export function EditProduct() {
   }
 
   function handleSubmit(e: FormEvent) {
-    e.preventDefault();
     if (!id) return;
+    e.preventDefault();
     setError(null);
 
     let area: string;
@@ -79,7 +83,7 @@ export function EditProduct() {
 
     const cat = categoryName.trim();
     if (!cat) {
-      setError("请填写品类名（如：鼠标、床垫）。");
+      setError("请填写品类名。");
       return;
     }
 
@@ -98,6 +102,12 @@ export function EditProduct() {
       selectedTier,
     );
 
+    const product = products.find((x) => x.id === id);
+    if (!product) {
+      setError("商品不存在");
+      return;
+    }
+
     updateProduct(id, {
       area,
       categoryName: cat,
@@ -105,6 +115,7 @@ export function EditProduct() {
       mid: parsed.mid,
       high: parsed.high,
       selectedTier: selectedResolved,
+      scene: product.scene,
     });
     navigate("/", { replace: true });
   }
@@ -134,7 +145,7 @@ export function EditProduct() {
               )
             }
           >
-            {AREA_PRESETS.map((a) => (
+            {areaPresets.map((a) => (
               <option key={a} value={a}>
                 {a}
               </option>

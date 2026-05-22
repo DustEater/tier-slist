@@ -160,6 +160,7 @@ function normalizeProduct(x: unknown): Product | null {
     mid: normalizeSlot(o.mid as TierSlot),
     high: normalizeSlot(o.high as TierSlot),
     selectedTier: parseSelectedTier(o.selectedTier),
+    scene: typeof o.scene === "string" && o.scene.trim() ? o.scene.trim() : "home",
   });
 }
 
@@ -189,11 +190,12 @@ function isTierSlotObj(x: unknown): x is TierSlot {
 function normalizeSlot(s: TierSlot): TierSlot {
   const name = typeof s.name === "string" ? s.name.trim() : "";
   const purchaseUrl = typeof s.purchaseUrl === "string" ? s.purchaseUrl.trim() : "";
+  const spec = typeof s.spec === "string" ? s.spec.trim() : "";
   if (!name) {
-    return { name: "", price: 0, purchaseUrl: "" };
+    return { name: "", price: 0, purchaseUrl: "", spec: "" };
   }
   const price = typeof s.price === "number" && Number.isFinite(s.price) && s.price >= 0 ? s.price : 0;
-  return { name, price, purchaseUrl };
+  return { name, price, purchaseUrl, spec };
 }
 
 function parseSelectedTier(x: unknown): PriceTier {

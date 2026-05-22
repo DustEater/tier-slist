@@ -2,7 +2,7 @@ import type { PriceTier } from "../../domain/product";
 import { TIER_LABELS, TIER_ORDER } from "../../domain/product";
 import type { TierFormState } from "../../domain/productForm";
 
-type FieldKey = "name" | "price" | "url";
+type FieldKey = "name" | "price" | "url" | "spec";
 
 type Props = {
   value: TierFormState;
@@ -44,6 +44,18 @@ export function TierFieldsSection({ value, onChange }: Props) {
                 value={value[tier].url}
                 onChange={(e) => onChange(tier, "url", e.target.value)}
                 placeholder="https://… 或留空"
+                autoComplete="off"
+              />
+            </label>
+          </div>
+          <div className="field-row">
+            <label className="field field-spec">
+              <span>规格（可选）</span>
+              <input
+                type="text"
+                value={value[tier].spec}
+                onChange={(e) => onChange(tier, "spec", e.target.value)}
+                placeholder="例如：6核12线程 / 4.7GHz"
                 autoComplete="off"
               />
             </label>

@@ -1,20 +1,35 @@
 import type { PriceTier, Product, TierSlot } from "./product";
-import { AREA_PRESETS, isTierFilled, TIER_LABELS } from "./product";
+import { isTierFilled, TIER_LABELS } from "./product";
 
 export const OTHER_AREA = "其他" as const;
 
-export type AreaPresetValue = (typeof AREA_PRESETS)[number] | typeof OTHER_AREA;
+export type AreaPresetValue = string;
+
+export const ALL_AREA_PRESETS = [
+  "客厅",
+  "卧室",
+  "厨房",
+  "卫浴",
+  "阳台",
+  "全屋",
+  "游戏主机",
+  "办公主机",
+  "设计工作站",
+  "家庭服务器",
+  "NAS",
+] as const;
 
 export type TierFormRow = {
   name: string;
   price: string;
   url: string;
+  spec: string;
 };
 
 export type TierFormState = Record<PriceTier, TierFormRow>;
 
 export function emptyTierFormState(): TierFormState {
-  const row = (): TierFormRow => ({ name: "", price: "", url: "" });
+  const row = (): TierFormRow => ({ name: "", price: "", url: "", spec: "" });
   return { economy: row(), mid: row(), high: row() };
 }
 
@@ -23,6 +38,7 @@ export function tierFormStateFromProduct(p: Product): TierFormState {
     name: slot.name,
     price: slot.name.trim() ? String(slot.price) : "",
     url: slot.purchaseUrl,
+    spec: slot.spec,
   });
   return {
     economy: row(p.economy),
@@ -42,8 +58,8 @@ export function areaToFormState(area: string): {
   areaOther: string;
 } {
   const a = area.trim();
-  if ((AREA_PRESETS as readonly string[]).includes(a)) {
-    return { areaPreset: a as (typeof AREA_PRESETS)[number], areaOther: "" };
+  if ((ALL_AREA_PRESETS as readonly string[]).includes(a)) {
+    return { areaPreset: a, areaOther: "" };
   }
   return { areaPreset: OTHER_AREA, areaOther: a };
 }
@@ -87,6 +103,7 @@ function parseTierRowOptional(
   const name = row.name.trim();
   const priceRaw = row.price.trim();
   const url = row.url.trim();
+  const spec = row.spec.trim();
 
   if (!name) {
     if (priceRaw !== "" && priceRaw !== "0") {
@@ -104,7 +121,7 @@ function parseTierRowOptional(
         message: `「${TIER_LABELS[tier]}」填写了链接但未填商品名，请补充或清空链接。`,
       };
     }
-    return { ok: true, slot: { name: "", price: 0, purchaseUrl: "" } };
+    return { ok: true, slot: { name: "", price: 0, purchaseUrl: "", spec: "" } };
   }
 
   const price = parseNonNegativePrice(row.price);
@@ -124,5 +141,5 @@ function parseTierRowOptional(
       };
     }
   }
-  return { ok: true, slot: { name, price, purchaseUrl: url } };
+  return { ok: true, slot: { name, price, purchaseUrl: url, spec } };
 }
