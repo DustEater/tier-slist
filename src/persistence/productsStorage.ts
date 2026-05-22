@@ -1,8 +1,37 @@
 import type { PriceTier, Product, TierSlot } from "../domain/product";
 import { ensureValidSelectedTier } from "../domain/product";
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:3001/api";
-const WS_URL = import.meta.env.VITE_WS_URL ?? "ws://localhost:3001";
+declare global {
+  interface Window {
+    electronAPI?: {
+      getServerPort: () => number;
+      getAppVersion: () => string;
+      saveDialog: (options: unknown) => Promise<unknown>;
+      openDialog: (options: unknown) => Promise<unknown>;
+    };
+  }
+}
+
+function getServerPort(): number {
+  const urlParams = new URLSearchParams(window.location.search);
+  const portParam = urlParams.get("port");
+  if (portParam) {
+    const port = parseInt(portParam, 10);
+    if (port > 0 && port < 65536) return port;
+  }
+  if (window.electronAPI) {
+    return window.electronAPI.getServerPort();
+  }
+  return 3001;
+}
+
+function getApiBase(): string {
+  return import.meta.env.VITE_API_BASE ?? `http://localhost:${getServerPort()}/api`;
+}
+
+function getWsUrl(): string {
+  return import.meta.env.VITE_WS_URL ?? `ws://localhost:${getServerPort()}`;
+}
 
 const TIER_LIST: PriceTier[] = ["economy", "mid", "high"];
 
@@ -17,7 +46,7 @@ class ApiError extends Error {
 }
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(`${getApiBase()}${path}`, {
     headers: { "Content-Type": "application/json" },
     ...options,
   });
@@ -191,7 +220,7 @@ export function createWebSocket(onUpdate: (products: Product[]) => void): () => 
     if (destroyed) return;
 
     try {
-      ws = new WebSocket(WS_URL);
+      ws = new WebSocket(getWsUrl());
     } catch {
       scheduleReconnect();
       return;

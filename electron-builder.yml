@@ -1,0 +1,23 @@
+appId: com.tier-slist.app
+productName: 产品挑选列表
+directories:
+  output: release
+files:
+  - dist/**/*
+  - electron-dist/**/*
+  - server/**/*
+  - package.json
+  - "!node_modules/**/test/**"
+  - "!node_modules/**/docs/**"
+  - "!node_modules/**/*.md"
+  - "!node_modules/**/*.map"
+asar:
+  smartUnpack: true
+removePackageScripts: true
+removePackageKeywords: true
+afterPack: ./scripts/afterPack.cjs
+win:
+  target:
+    - target: zip
+  icon: build/icon.png
+  signAndEditExecutable: false

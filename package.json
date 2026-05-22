@@ -3,32 +3,40 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "electron-dist/electron/main.js",
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
     "dev": "concurrently --kill-others --names server,client --prefix-colors cyan,green \"npm run server\" \"vite\"",
+    "dev:electron": "concurrently --kill-others --names server,client,electron --prefix-colors cyan,green,magenta \"npm run server\" \"vite\" \"electron . --no-sandbox\"",
     "build": "tsc -b && vite build",
+    "build:electron": "tsc -p tsconfig.electron.json && tsc -p tsconfig.preload.json && mv electron-dist/electron/preload.js electron-dist/electron/preload.cjs",
     "preview": "vite preview",
     "server": "tsx server/index.ts",
-    "start": "npm run dev"
+    "start": "npm run dev",
+    "package": "npm run build && npm run build:electron && electron-builder",
+    "package:portable": "npm run build && npm run build:electron && electron-builder --win portable",
+    "package:installer": "npm run build && npm run build:electron && electron-builder --win nsis"
   },
   "dependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/ws": "^8.18.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.0",
     "ws": "^8.20.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.2.1",
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
     "tsx": "^4.21.0",
     "typescript": "^5.6.3",
     "vite": "^5.4.11"

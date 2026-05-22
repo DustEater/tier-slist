@@ -17,6 +17,7 @@ import {
   saveProductsToFile,
   updateProduct,
 } from "../persistence/productsStorage";
+import { LoadingScreen } from "../components/LoadingScreen";
 
 type ProductsContextValue = {
   products: Product[];
@@ -120,7 +121,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
   );
 
   if (loading) {
-    return <div>加载中...</div>;
+    return <LoadingScreen />;
   }
 
   return (
