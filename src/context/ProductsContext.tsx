@@ -67,7 +67,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
 
   const addProductHandler = useCallback(async (input: Omit<Product, "id">) => {
     try {
-      await addProduct(input);
+      await addProduct({ ...input, sortOrder: Date.now() });
     } catch (error) {
       createErrorHandler("add product")(error);
     }

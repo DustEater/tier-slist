@@ -1,0 +1,116 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+/* 产品列表：全宽网页排版 */
+.page.page-catalog {
+  max-width: min(1520px, 100%);
+  margin: 0 auto;
+  padding: 0 clamp(1rem, 3vw, 2.5rem) 3rem;
+}
+
+.catalog-header {
+  margin-bottom: 1.75rem;
+  padding: 1.5rem 0 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.catalog-header-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+}
+
+.catalog-title-block h1 {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-heading);
+}
+
+.catalog-subtitle {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  line-height: 1.55;
+  max-width: var(--content-max-text);
+}
+
+.catalog-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.catalog-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+}
+
+.catalog-area-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-heading-soft);
+}
+
+.catalog-area-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.85rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg,
+      var(--badge-bg-start) 0%,
+      var(--badge-bg-end) 100%);
+  color: var(--badge-text);
+  border: 1px solid var(--badge-border);
+  font-size: 1rem;
+}
+
+.catalog-area-count {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-caption);
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+  gap: 1.25rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+/* === 工具栏（搜索 + 视图） === */
+.catalog-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}

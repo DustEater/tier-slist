@@ -44,6 +44,8 @@ export type Product = {
   selectedTier: PriceTier;
   /** 所属场景（home / pc-build / 自定义），用于数据隔离 */
   scene: string;
+  /** 排序权重，同一区域内按此升序排列 */
+  sortOrder: number;
 };
 
 export function tierSlot(p: Product, tier: PriceTier): TierSlot {

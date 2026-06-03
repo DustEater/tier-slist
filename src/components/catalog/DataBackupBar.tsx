@@ -1,6 +1,7 @@
-import { type ChangeEvent, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, useRef } from "react";
 import { useProducts } from "../../context/ProductsContext";
 import type { Product } from "../../domain/product";
+import { useDismissableNotice } from "../../hooks/useDismissableNotice";
 import { backupDownloadFilename } from "../../lib/backupFilename";
 import {
   parseImportedProductsJson,
@@ -14,29 +15,7 @@ type Props = {
 export function DataBackupBar({ products }: Props) {
   const { replaceProductsFromImport, saveToDisk } = useProducts();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const noticeTimerRef = useRef<number | null>(null);
-  const [notice, setNotice] = useState<{
-    kind: "success" | "error";
-    text: string;
-  } | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (noticeTimerRef.current !== null) {
-        window.clearTimeout(noticeTimerRef.current);
-      }
-    };
-  }, []);
-
-  function dismissNoticeLater(ms: number) {
-    if (noticeTimerRef.current !== null) {
-      window.clearTimeout(noticeTimerRef.current);
-    }
-    noticeTimerRef.current = window.setTimeout(() => {
-      noticeTimerRef.current = null;
-      setNotice(null);
-    }, ms);
-  }
+  const { notice, showNotice } = useDismissableNotice(4500);
 
   async function handleExport() {
     await saveToDisk();
@@ -51,23 +30,21 @@ export function DataBackupBar({ products }: Props) {
     a.rel = "noopener";
     a.click();
     URL.revokeObjectURL(url);
-    setNotice({
+    showNotice({
       kind: "success",
       text:
         products.length === 0
           ? "已保存到服务端并导出空列表（[]），可在新环境导入后作为起点。"
           : `已保存到服务端并导出 ${products.length} 条记录到下载目录。`,
     });
-    dismissNoticeLater(4500);
   }
 
   async function handleSave() {
     await saveToDisk();
-    setNotice({
+    showNotice({
       kind: "success",
       text: `已保存 ${products.length} 条记录到本地文件。`,
     });
-    dismissNoticeLater(3000);
   }
 
   function openFilePicker() {
@@ -83,13 +60,13 @@ export function DataBackupBar({ products }: Props) {
     try {
       text = await file.text();
     } catch {
-      setNotice({ kind: "error", text: "读取文件失败，请重试。" });
+      showNotice({ kind: "error", text: "读取文件失败，请重试。" });
       return;
     }
 
     const parsed = parseImportedProductsJson(text);
     if (!parsed.ok) {
-      setNotice({ kind: "error", text: parsed.message });
+      showNotice({ kind: "error", text: parsed.message });
       return;
     }
 
@@ -104,11 +81,10 @@ export function DataBackupBar({ products }: Props) {
     if (!ok) return;
 
     replaceProductsFromImport(incoming);
-    setNotice({
+    showNotice({
       kind: "success",
       text: `已替换：导入 ${incoming.length} 条记录，替换原有 ${products.length} 条。`,
     });
-    dismissNoticeLater(5000);
   }
 
   return (
@@ -159,11 +135,10 @@ export function DataBackupBar({ products }: Props) {
               : "catalog-data-notice catalog-data-notice-success"
           }
           role="status"
-        >  
+        >
            {notice.text}
         </p>
         ) : null}
       </div>
   );
-      
 }

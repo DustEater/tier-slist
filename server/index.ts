@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import type { Product } from "../src/domain/product";
+import { scrapeProductInfo } from "./scraper";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -117,6 +118,7 @@ export async function createServer(config?: ServerConfig): Promise<{ server: htt
       high: normalizeSlot(o.high as any),
       selectedTier: parseSelectedTier(o.selectedTier),
       scene: typeof o.scene === "string" && o.scene.trim() ? o.scene.trim() : "home",
+      sortOrder: typeof o.sortOrder === "number" && Number.isFinite(o.sortOrder) ? o.sortOrder : 0,
     });
   }
 
@@ -184,6 +186,7 @@ export async function createServer(config?: ServerConfig): Promise<{ server: htt
       typeof o.categoryName === "string" &&
       typeof o.selectedTier === "string" &&
       typeof o.scene === "string" &&
+      typeof o.sortOrder === "number" &&
       isTierSlot(o.economy) &&
       isTierSlot(o.mid) &&
       isTierSlot(o.high)
@@ -230,6 +233,27 @@ export async function createServer(config?: ServerConfig): Promise<{ server: htt
   app.post("/api/products/save", (_req, res) => {
     saveToFile();
     res.json({ ok: true });
+  });
+
+  app.post("/api/scrape-product-info", async (req, res) => {
+    const { url } = req.body;
+    if (!url || typeof url !== "string") {
+      return res.status(400).json({ error: "请提供有效的商品链接" });
+    }
+
+    try {
+      new URL(url);
+    } catch {
+      return res.status(400).json({ error: "链接格式不正确" });
+    }
+
+    try {
+      const info = await scrapeProductInfo(url);
+      res.json(info);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "抓取失败";
+      res.json({ name: null, price: null, currency: null, error: message });
+    }
   });
 
   const server = http.createServer(app);

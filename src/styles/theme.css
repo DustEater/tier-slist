@@ -1,0 +1,136 @@
+:root {
+  color-scheme: light;
+  --color-text: #1a1a1a;
+  --color-text-muted: #6b7280;
+  --color-surface: #ffffff;
+  --color-page-bg: #f4f5f7;
+  --color-border: #e5e7eb;
+  --color-border-subtle: #f3f4f6;
+  --color-input-border: #d1d5db;
+  --color-heading: #111827;
+  --color-heading-soft: #1f2937;
+  --color-label: #6b7280;
+  --color-caption: #9ca3af;
+  --radius-card: 14px;
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.06);
+  --content-max-text: 42rem;
+
+  --tier-panel-bg: #fafafa;
+  --tier-panel-empty-bg: #f9fafb;
+  --tier-active-border: #93c5fd;
+  --tier-active-bg: #eff6ff;
+  --tier-active-shadow: rgb(37 99 235 / 0.12);
+  --tier-hover-border: #cbd5e1;
+  --tier-hover-bg: #f1f5f9;
+  --tier-price: #0f172a;
+
+  --badge-bg-start: #eff6ff;
+  --badge-bg-end: #dbeafe;
+  --badge-text: #1e40af;
+  --badge-border: #bfdbfe;
+
+  --btn-primary: #2563eb;
+  --btn-primary-hover: #1d4ed8;
+  --btn-on-primary: #ffffff;
+  --btn-ghost-bg: #ffffff;
+  --btn-ghost-text: #374151;
+  --btn-ghost-border: #d1d5db;
+  --btn-ghost-hover-bg: #f9fafb;
+  --btn-danger-bg: #ffffff;
+  --btn-danger-text: #b91c1c;
+  --btn-danger-border: #fecaca;
+  --btn-danger-hover-bg: #fef2f2;
+  --btn-danger-hover-border: #f87171;
+
+  --notice-success-bg: #ecfdf5;
+  --notice-success-text: #065f46;
+  --notice-success-border: #a7f3d0;
+  --notice-error-bg: #fef2f2;
+  --notice-error-text: #991b1b;
+  --notice-error-border: #fecaca;
+
+  --form-hint-bg: #f9fafb;
+  --form-hint-text: #4b5563;
+  --form-error-bg: #fef2f2;
+  --form-error-text: #991b1b;
+
+  --color-link: #2563eb;
+  --focus-ring: #2563eb;
+
+  --table-header-bg: #fafafa;
+  --table-border-row: #f3f4f6;
+  --table-header-text: #4b5563;
+  --table-tier-head-bg: #eef2ff;
+  --table-tier-head-text: #3730a3;
+
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--color-text);
+  background-color: var(--color-page-bg);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-text: #e5e7eb;
+  --color-text-muted: #94a3b8;
+  --color-surface: #1e293b;
+  --color-page-bg: #0f172a;
+  --color-border: #334155;
+  --color-border-subtle: #334155;
+  --color-input-border: #475569;
+  --color-heading: #f8fafc;
+  --color-heading-soft: #e2e8f0;
+  --color-label: #94a3b8;
+  --color-caption: #64748b;
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.45);
+
+  --tier-panel-bg: #334155;
+  --tier-panel-empty-bg: #1e293b;
+  --tier-active-border: #60a5fa;
+  --tier-active-bg: rgba(30, 58, 95, 0.92);
+  --tier-active-shadow: rgb(96 165 250 / 0.22);
+  --tier-hover-border: #475569;
+  --tier-hover-bg: #3d4f63;
+  --tier-price: #f8fafc;
+
+  --badge-bg-start: #1e3a5f;
+  --badge-bg-end: #172554;
+  --badge-text: #93c5fd;
+  --badge-border: #3b82f6;
+
+  --btn-primary: #3b82f6;
+  --btn-primary-hover: #2563eb;
+  --btn-on-primary: #ffffff;
+  --btn-ghost-bg: #1e293b;
+  --btn-ghost-text: #e2e8f0;
+  --btn-ghost-border: #475569;
+  --btn-ghost-hover-bg: #334155;
+  --btn-danger-bg: #1e293b;
+  --btn-danger-text: #f87171;
+  --btn-danger-border: #991b1b;
+  --btn-danger-hover-bg: #450a0a;
+  --btn-danger-hover-border: #ef4444;
+
+  --notice-success-bg: #064e3b;
+  --notice-success-text: #6ee7b7;
+  --notice-success-border: #059669;
+  --notice-error-bg: #450a0a;
+  --notice-error-text: #fca5a5;
+  --notice-error-border: #b91c1c;
+
+  --form-hint-bg: #1e293b;
+  --form-hint-text: #cbd5e1;
+  --form-error-bg: #450a0a;
+  --form-error-text: #fca5a5;
+
+  --color-link: #60a5fa;
+  --focus-ring: #60a5fa;
+
+  --table-header-bg: #334155;
+  --table-border-row: #475569;
+  --table-header-text: #cbd5e1;
+  --table-tier-head-bg: #312e81;
+  --table-tier-head-text: #c7d2fe;
+}

@@ -1,89 +1,50 @@
-import { FormEvent, useState } from "react";
+import { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { SceneSwitcher } from "../components/SceneSwitcher";
 import { TierFieldsSection } from "../components/forms/TierFieldsSection";
 import { useProducts } from "../context/ProductsContext";
-import { useScene } from "../context/SceneContext";
-import { pickSelectedTier, type PriceTier } from "../domain/product";
-import {
-  emptyTierFormState,
-  OTHER_AREA,
-  parseTierFormState,
-  type AreaPresetValue,
-  type TierFormState,
-} from "../domain/productForm";
-import {
-  getAreaPresets,
-  getSceneAddTitle,
-  getSceneCategoryPlaceholder,
-} from "../domain/scene";
-
-type TierField = "name" | "price" | "url" | "spec";
+import type { Product, PriceTier } from "../domain/product";
+import { isTierFilled, tierSlot } from "../domain/product";
+import { OTHER_AREA, type TierFormRow } from "../domain/productForm";
+import { getSceneAddTitle } from "../domain/scene";
+import { useProductForm } from "../hooks/useProductForm";
 
 export function AddProduct() {
   const navigate = useNavigate();
-  const { addProduct } = useProducts();
-  const { scene } = useScene();
-  const areaPresets = getAreaPresets(scene);
-  const defaultPreset = areaPresets.length > 0 ? areaPresets[0] : OTHER_AREA;
-  const [areaPreset, setAreaPreset] = useState<AreaPresetValue>(defaultPreset);
-  const [areaOther, setAreaOther] = useState("");
-  const [categoryName, setCategoryName] = useState("");
-  const [tiers, setTiers] = useState<TierFormState>(() => emptyTierFormState());
-  const [selectedTier, setSelectedTier] = useState<PriceTier>("mid");
-  const [error, setError] = useState<string | null>(null);
+  const { addProduct, products } = useProducts();
+  const form = useProductForm();
 
-  function setTierField(tier: PriceTier, field: TierField, value: string) {
-    setTiers((prev) => ({
-      ...prev,
-      [tier]: { ...prev[tier], [field]: value },
-    }));
+  function copyFromPrevious() {
+    const prev = findPreviousProductForCopy(products, form.areaPreset);
+    if (!prev) return;
+
+    const p = prev;
+    function toRow(tier: PriceTier): TierFormRow {
+      const s = tierSlot(p, tier);
+      return {
+        name: s.name,
+        price: s.price > 0 ? String(s.price) : "",
+        url: s.purchaseUrl,
+        spec: s.spec,
+      };
+    }
+
+    form.setTiers({
+      economy: toRow("economy"),
+      mid: toRow("mid"),
+      high: toRow("high"),
+    });
   }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setError(null);
-
-    let area: string;
-    if (areaPreset === OTHER_AREA) {
-      area = areaOther.trim();
-      if (!area) {
-        setError("选择「其他」时请填写自定义区域名称。");
-        return;
-      }
-    } else {
-      area = areaPreset;
-    }
-
-    const cat = categoryName.trim();
-    if (!cat) {
-      setError("请填写品类名。");
-      return;
-    }
-
-    const parsed = parseTierFormState(tiers);
-    if (!parsed.ok) {
-      setError(parsed.message);
-      return;
-    }
-
-    const selectedResolved = pickSelectedTier(
-      {
-        economy: parsed.economy,
-        mid: parsed.mid,
-        high: parsed.high,
-      },
-      selectedTier,
-    );
+    const data = form.validate();
+    if (!data) return;
 
     addProduct({
-      area,
-      categoryName: cat,
-      economy: parsed.economy,
-      mid: parsed.mid,
-      high: parsed.high,
-      selectedTier: selectedResolved,
-      scene,
+      ...data,
+      scene: form.scene,
+      sortOrder: Date.now(),
     });
     navigate("/", { replace: true });
   }
@@ -91,28 +52,25 @@ export function AddProduct() {
   return (
     <div className="page">
       <header className="header">
-        <h1>{getSceneAddTitle(scene)}</h1>
+        <h1>{getSceneAddTitle(form.scene)}</h1>
         <Link className="btn btn-ghost" to="/">
           返回列表
         </Link>
+        <SceneSwitcher />
       </header>
 
-      <SceneSwitcher />
-
       <form className="form-card form-card-wide" onSubmit={handleSubmit}>
-        {error && <p className="form-error">{error}</p>}
+        {form.error && <p className="form-error">{form.error}</p>}
 
         <p className="form-block-title">区域与品类</p>
         <label className="field">
           <span>区域</span>
           <select
-            value={areaPreset}
-            onChange={(e) =>
-              setAreaPreset(e.target.value as AreaPresetValue)
-            }
+            value={form.areaPreset}
+            onChange={(e) => form.setAreaPreset(e.target.value)}
           >
-            {areaPresets.length > 0 ? (
-              areaPresets.map((a) => (
+            {form.areaPresets.length > 0 ? (
+              form.areaPresets.map((a) => (
                 <option key={a} value={a}>
                   {a}
                 </option>
@@ -124,13 +82,13 @@ export function AddProduct() {
           </select>
         </label>
 
-        {areaPreset === OTHER_AREA ? (
+        {form.areaPreset === OTHER_AREA ? (
           <label className="field">
             <span>自定义区域名称</span>
             <input
               type="text"
-              value={areaOther}
-              onChange={(e) => setAreaOther(e.target.value)}
+              value={form.areaOther}
+              onChange={(e) => form.setAreaOther(e.target.value)}
               placeholder="例如：书房"
               autoComplete="off"
             />
@@ -141,9 +99,9 @@ export function AddProduct() {
           <span>品类名</span>
           <input
             type="text"
-            value={categoryName}
-            onChange={(e) => setCategoryName(e.target.value)}
-            placeholder={getSceneCategoryPlaceholder(scene)}
+            value={form.categoryName}
+            onChange={(e) => form.setCategoryName(e.target.value)}
+            placeholder={form.categoryPlaceholder}
             autoComplete="off"
           />
         </label>
@@ -153,15 +111,19 @@ export function AddProduct() {
           至少完整填写一个档位（商品名与价格）；其余档位可整档留空。若默认选用档位指向未填写的档，保存后会自动选用第一个已填档位。
         </p>
 
-        <TierFieldsSection value={tiers} onChange={setTierField} />
+        <TierFieldsSection value={form.tiers} onChange={form.setTierField} />
+
+        <CopyFromPreviousBar
+          areaPreset={form.areaPreset}
+          products={products}
+          onCopy={copyFromPrevious}
+        />
 
         <label className="field">
           <span>默认选用档位（加入列表后仍可改）</span>
           <select
-            value={selectedTier}
-            onChange={(e) =>
-              setSelectedTier(e.target.value as PriceTier)
-            }
+            value={form.selectedTier}
+            onChange={(e) => form.setSelectedTier(e.target.value as any)}
           >
             <option value="economy">经济档</option>
             <option value="mid">中档</option>
@@ -180,4 +142,45 @@ export function AddProduct() {
       </form>
     </div>
   );
+}
+
+function CopyFromPreviousBar({
+  areaPreset,
+  products,
+  onCopy,
+}: {
+  areaPreset: string;
+  products: Product[];
+  onCopy: () => void;
+}) {
+  const prev = findPreviousProductForCopy(products, areaPreset);
+  if (!prev) return null;
+  const filledCount = (["economy", "mid", "high"] as const).filter((t) =>
+    isTierFilled(tierSlot(prev, t)),
+  ).length;
+
+  return (
+    <p className="form-section-hint" style={{ marginTop: "-0.25rem" }}>
+      同一区域已有「{prev.categoryName}」({filledCount} 档已填)。
+      <button
+        type="button"
+        className="btn btn-ghost btn-sm"
+        style={{ marginLeft: "0.5rem", verticalAlign: "middle" }}
+        onClick={onCopy}
+      >
+        复制档位
+      </button>
+    </p>
+  );
+}
+
+function findPreviousProductForCopy(
+  products: Product[],
+  areaPreset: string,
+) {
+  const sameArea = products.filter(
+    (p) => p.area === areaPreset,
+  );
+  if (sameArea.length === 0) return null;
+  return sameArea[sameArea.length - 1];
 }

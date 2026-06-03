@@ -28,5 +28,8 @@ export function groupProductsByArea(
     if (ra !== rb) return ra - rb;
     return (firstSeq.get(a) ?? 0) - (firstSeq.get(b) ?? 0);
   });
-  return keys.map((area) => ({ area, items: map.get(area)! }));
+  return keys.map((area) => ({
+    area,
+    items: map.get(area)!.sort((a, b) => a.sortOrder - b.sortOrder),
+  }));
 }

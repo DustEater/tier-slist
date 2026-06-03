@@ -8,6 +8,11 @@ declare global {
       getAppVersion: () => string;
       saveDialog: (options: unknown) => Promise<unknown>;
       openDialog: (options: unknown) => Promise<unknown>;
+      scrapeProductInfo: (url: string) => Promise<{
+        name: string | null;
+        price: number | null;
+        currency: string | null;
+      }>;
     };
   }
 }
@@ -110,6 +115,33 @@ export async function saveProductsToFile(): Promise<{ ok: boolean }> {
   return apiFetch<{ ok: boolean }>("/products/save", { method: "POST" });
 }
 
+export interface ScrapedProductInfo {
+  name: string | null;
+  price: number | null;
+  currency: string | null;
+  error?: string;
+}
+
+export async function scrapeProductInfo(
+  url: string,
+): Promise<ScrapedProductInfo> {
+  const electronApi = window.electronAPI;
+  if (electronApi?.scrapeProductInfo) {
+    try {
+      return await electronApi.scrapeProductInfo(url);
+    } catch {
+      return apiFetch<ScrapedProductInfo>("/scrape-product-info", {
+        method: "POST",
+        body: JSON.stringify({ url }),
+      });
+    }
+  }
+  return apiFetch<ScrapedProductInfo>("/scrape-product-info", {
+    method: "POST",
+    body: JSON.stringify({ url }),
+  });
+}
+
 export function serializeProductsJson(products: Product[]): string {
   return JSON.stringify(products, null, 2);
 }
@@ -161,6 +193,7 @@ function normalizeProduct(x: unknown): Product | null {
     high: normalizeSlot(o.high as TierSlot),
     selectedTier: parseSelectedTier(o.selectedTier),
     scene: typeof o.scene === "string" && o.scene.trim() ? o.scene.trim() : "home",
+    sortOrder: typeof o.sortOrder === "number" && Number.isFinite(o.sortOrder) ? o.sortOrder : 0,
   });
 }
 

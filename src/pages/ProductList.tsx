@@ -1,7 +1,8 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { DataBackupBar } from "../components/catalog/DataBackupBar";
 import { ProductCard } from "../components/catalog/ProductCard";
+import { ProductTable } from "../components/catalog/ProductTable";
 import { SceneSwitcher } from "../components/SceneSwitcher";
 import { groupProductsByArea } from "../catalog/groupByArea";
 import { useProducts } from "../context/ProductsContext";
@@ -18,14 +19,26 @@ import {
 } from "../domain/scene";
 import { formatMoney } from "../lib/formatMoney";
 
+type ViewMode = "card" | "table";
+
 export function ProductList() {
   const { products, removeProduct, updateProduct } = useProducts();
   const { scene } = useScene();
+  const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("card");
 
   const sceneProducts = useMemo(
     () => products.filter((p) => (p.scene || "home") === scene),
     [products, scene],
   );
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return sceneProducts;
+    return sceneProducts.filter((p) =>
+      p.categoryName.toLowerCase().includes(q),
+    );
+  }, [sceneProducts, search]);
 
   const handleTierChange = useCallback(
     (id: string, tier: PriceTier) => {
@@ -42,9 +55,10 @@ export function ProductList() {
   );
 
   const groups = useMemo(
-    () => groupProductsByArea(sceneProducts, scene),
-    [sceneProducts, scene],
+    () => groupProductsByArea(filtered, scene),
+    [filtered, scene],
   );
+
   const total = useMemo(
     () =>
       sceneProducts.reduce(
@@ -60,8 +74,6 @@ export function ProductList() {
 
   return (
     <div className="page page-catalog">
-      <SceneSwitcher />
-
       <header className="catalog-header">
         <div className="catalog-header-inner">
           <div className="catalog-title-block">
@@ -76,8 +88,40 @@ export function ProductList() {
             </Link>
           </div>
         </div>
+        <SceneSwitcher />
         <DataBackupBar products={products} />
       </header>
+
+      {sceneProducts.length > 0 ? (
+        <div className="catalog-toolbar">
+          <div className="catalog-search">
+            <input
+              type="text"
+              className="catalog-search-input"
+              placeholder={`搜索${itemName}...`}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              autoComplete="off"
+            />
+          </div>
+          <div className="view-toggle">
+            <button
+              type="button"
+              className={`view-toggle-btn ${viewMode === "card" ? "view-toggle-btn-active" : ""}`}
+              onClick={() => setViewMode("card")}
+            >
+              🪪 卡片
+            </button>
+            <button
+              type="button"
+              className={`view-toggle-btn ${viewMode === "table" ? "view-toggle-btn-active" : ""}`}
+              onClick={() => setViewMode("table")}
+            >
+              📋 表格
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {sceneProducts.length === 0 ? (
         <div className="empty-catalog empty-catalog-cta" role="status">
@@ -89,6 +133,14 @@ export function ProductList() {
             {addLabel}
           </Link>
         </div>
+      ) : viewMode === "table" ? (
+        <main className="catalog-main">
+          <ProductTable
+            groups={groups}
+            onTierChange={handleTierChange}
+            onRemove={handleRemove}
+          />
+        </main>
       ) : (
         <main className="catalog-main">
           {groups.map(({ area, items }) => (

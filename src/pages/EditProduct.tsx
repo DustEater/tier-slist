@@ -1,120 +1,40 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { TierFieldsSection } from "../components/forms/TierFieldsSection";
 import { useProducts } from "../context/ProductsContext";
-import { useScene } from "../context/SceneContext";
-import { pickSelectedTier, type PriceTier } from "../domain/product";
-import {
-  areaToFormState,
-  emptyTierFormState,
-  OTHER_AREA,
-  parseTierFormState,
-  tierFormStateFromProduct,
-  type AreaPresetValue,
-  type TierFormState,
-} from "../domain/productForm";
-import { getAreaPresets } from "../domain/scene";
-
-type TierField = "name" | "price" | "url" | "spec";
+import { OTHER_AREA } from "../domain/productForm";
+import { useProductForm } from "../hooks/useProductForm";
 
 export function EditProduct() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { products, updateProduct } = useProducts();
-  const { scene } = useScene();
-  const areaPresets = getAreaPresets(scene);
 
-  const [areaPreset, setAreaPreset] = useState<AreaPresetValue>("客厅");
-  const [areaOther, setAreaOther] = useState("");
-  const [categoryName, setCategoryName] = useState("");
-  const [tiers, setTiers] = useState<TierFormState>(() => emptyTierFormState());
-  const [selectedTier, setSelectedTier] = useState<PriceTier>("mid");
-  const [error, setError] = useState<string | null>(null);
-
+  const product = id ? products.find((x) => x.id === id) : undefined;
+  const form = useProductForm(product ?? null);
   const hydratedForId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!id || !product) return;
+    if (hydratedForId.current === id) return;
+    hydratedForId.current = id;
+    form.fillFromProduct(product);
+  }, [id, product, form]);
 
   useEffect(() => {
     hydratedForId.current = null;
   }, [id]);
 
-  useEffect(() => {
-    if (!id) {
-      navigate("/", { replace: true });
-      return;
-    }
-    const p = products.find((x) => x.id === id);
-    if (!p) {
-      navigate("/", { replace: true });
-      return;
-    }
-    if (hydratedForId.current === id) return;
-    hydratedForId.current = id;
-    const { areaPreset: ap, areaOther: ao } = areaToFormState(p.area);
-    setAreaPreset(ap);
-    setAreaOther(ao);
-    setCategoryName(p.categoryName);
-    setTiers(tierFormStateFromProduct(p));
-    setSelectedTier(p.selectedTier);
-    setError(null);
-  }, [id, products, navigate]);
-
-  function setTierField(tier: PriceTier, field: TierField, value: string) {
-    setTiers((prev) => ({
-      ...prev,
-      [tier]: { ...prev[tier], [field]: value },
-    }));
-  }
-
   function handleSubmit(e: FormEvent) {
-    if (!id) return;
     e.preventDefault();
-    setError(null);
+    if (!id) return;
 
-    let area: string;
-    if (areaPreset === OTHER_AREA) {
-      area = areaOther.trim();
-      if (!area) {
-        setError("选择「其他」时请填写自定义区域名称。");
-        return;
-      }
-    } else {
-      area = areaPreset;
-    }
-
-    const cat = categoryName.trim();
-    if (!cat) {
-      setError("请填写品类名。");
-      return;
-    }
-
-    const parsed = parseTierFormState(tiers);
-    if (!parsed.ok) {
-      setError(parsed.message);
-      return;
-    }
-
-    const selectedResolved = pickSelectedTier(
-      {
-        economy: parsed.economy,
-        mid: parsed.mid,
-        high: parsed.high,
-      },
-      selectedTier,
-    );
-
-    const product = products.find((x) => x.id === id);
-    if (!product) {
-      setError("商品不存在");
-      return;
-    }
+    const data = form.validate();
+    if (!data) return;
+    if (!product) return;
 
     updateProduct(id, {
-      area,
-      categoryName: cat,
-      economy: parsed.economy,
-      mid: parsed.mid,
-      high: parsed.high,
-      selectedTier: selectedResolved,
+      ...data,
       scene: product.scene,
     });
     navigate("/", { replace: true });
@@ -132,35 +52,35 @@ export function EditProduct() {
       </header>
 
       <form className="form-card form-card-wide" onSubmit={handleSubmit}>
-        {error && <p className="form-error">{error}</p>}
+        {form.error && <p className="form-error">{form.error}</p>}
 
         <p className="form-block-title">区域与品类</p>
         <label className="field">
           <span>区域</span>
           <select
-            value={areaPreset}
-            onChange={(e) =>
-              setAreaPreset(
-                e.target.value as AreaPresetValue,
-              )
-            }
+            value={form.areaPreset}
+            onChange={(e) => form.setAreaPreset(e.target.value)}
           >
-            {areaPresets.map((a) => (
-              <option key={a} value={a}>
-                {a}
-              </option>
-            ))}
+            {form.areaPresets.length > 0 ? (
+              form.areaPresets.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))
+            ) : (
+              <option value="">请选择或自定义</option>
+            )}
             <option value={OTHER_AREA}>其他（自定义）</option>
           </select>
         </label>
 
-        {areaPreset === OTHER_AREA ? (
+        {form.areaPreset === OTHER_AREA ? (
           <label className="field">
             <span>自定义区域名称</span>
             <input
               type="text"
-              value={areaOther}
-              onChange={(e) => setAreaOther(e.target.value)}
+              value={form.areaOther}
+              onChange={(e) => form.setAreaOther(e.target.value)}
               placeholder="例如：书房"
               autoComplete="off"
             />
@@ -171,9 +91,9 @@ export function EditProduct() {
           <span>品类名</span>
           <input
             type="text"
-            value={categoryName}
-            onChange={(e) => setCategoryName(e.target.value)}
-            placeholder="例如：鼠标、智能马桶"
+            value={form.categoryName}
+            onChange={(e) => form.setCategoryName(e.target.value)}
+            placeholder={form.categoryPlaceholder}
             autoComplete="off"
           />
         </label>
@@ -183,15 +103,13 @@ export function EditProduct() {
           至少保留一个已填档位；未使用的档位可清空商品名与价格整档留空。
         </p>
 
-        <TierFieldsSection value={tiers} onChange={setTierField} />
+        <TierFieldsSection value={form.tiers} onChange={form.setTierField} />
 
         <label className="field">
           <span>选用档位</span>
           <select
-            value={selectedTier}
-            onChange={(e) =>
-              setSelectedTier(e.target.value as PriceTier)
-            }
+            value={form.selectedTier}
+            onChange={(e) => form.setSelectedTier(e.target.value as any)}
           >
             <option value="economy">经济档</option>
             <option value="mid">中档</option>
