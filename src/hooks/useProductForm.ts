@@ -22,6 +22,7 @@ export type ValidatedProductData = {
   mid: TierSlot;
   high: TierSlot;
   selectedTier: PriceTier;
+  quantity: number;
 };
 
 export function useProductForm(initialProduct?: Product | null) {
@@ -41,6 +42,9 @@ export function useProductForm(initialProduct?: Product | null) {
   );
   const [selectedTier, setSelectedTier] = useState<PriceTier>(
     initialProduct?.selectedTier ?? "mid",
+  );
+  const [quantity, setQuantity] = useState(
+    initialProduct?.quantity ?? 1,
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -102,6 +106,7 @@ export function useProductForm(initialProduct?: Product | null) {
       mid: parsed.mid,
       high: parsed.high,
       selectedTier: selectedResolved,
+      quantity,
     };
   }
 
@@ -112,6 +117,7 @@ export function useProductForm(initialProduct?: Product | null) {
     setCategoryName(p.categoryName);
     setTiers(tierFormStateFromProduct(p));
     setSelectedTier(p.selectedTier);
+    setQuantity(p.quantity);
     setError(null);
   }
 
@@ -128,6 +134,8 @@ export function useProductForm(initialProduct?: Product | null) {
     tiers,
     selectedTier,
     setSelectedTier,
+    quantity,
+    setQuantity,
     setTierField,
     setTiers,
     error,

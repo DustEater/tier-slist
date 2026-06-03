@@ -98,6 +98,22 @@ export function EditProduct() {
           />
         </label>
 
+        <label className="field">
+          <span>数量</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            step={1}
+            value={form.quantity}
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10);
+              form.setQuantity(Number.isFinite(v) && v > 0 ? v : 1);
+            }}
+            autoComplete="off"
+          />
+        </label>
+
         <p className="form-block-title">各档位与选用</p>
         <p className="form-section-hint">
           至少保留一个已填档位；未使用的档位可清空商品名与价格整档留空。

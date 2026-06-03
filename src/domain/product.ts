@@ -42,6 +42,8 @@ export type Product = {
   high: TierSlot;
   /** 计入合计时使用的档位 */
   selectedTier: PriceTier;
+  /** 数量（默认为 1） */
+  quantity: number;
   /** 所属场景（home / pc-build / 自定义），用于数据隔离 */
   scene: string;
   /** 排序权重，同一区域内按此升序排列 */

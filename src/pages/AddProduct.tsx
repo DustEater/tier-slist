@@ -106,6 +106,22 @@ export function AddProduct() {
           />
         </label>
 
+        <label className="field">
+          <span>数量</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            step={1}
+            value={form.quantity}
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10);
+              form.setQuantity(Number.isFinite(v) && v > 0 ? v : 1);
+            }}
+            autoComplete="off"
+          />
+        </label>
+
         <p className="form-block-title">各档位与默认选用</p>
         <p className="form-section-hint">
           至少完整填写一个档位（商品名与价格）；其余档位可整档留空。若默认选用档位指向未填写的档，保存后会自动选用第一个已填档位。

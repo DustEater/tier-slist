@@ -192,6 +192,7 @@ function normalizeProduct(x: unknown): Product | null {
     mid: normalizeSlot(o.mid as TierSlot),
     high: normalizeSlot(o.high as TierSlot),
     selectedTier: parseSelectedTier(o.selectedTier),
+    quantity: typeof o.quantity === "number" && Number.isInteger(o.quantity) && o.quantity > 0 ? o.quantity : 1,
     scene: typeof o.scene === "string" && o.scene.trim() ? o.scene.trim() : "home",
     sortOrder: typeof o.sortOrder === "number" && Number.isFinite(o.sortOrder) ? o.sortOrder : 0,
   });

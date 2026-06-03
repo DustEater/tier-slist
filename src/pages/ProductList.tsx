@@ -54,6 +54,13 @@ export function ProductList() {
     [removeProduct],
   );
 
+  const handleQuantityChange = useCallback(
+    (id: string, quantity: number) => {
+      updateProduct(id, { quantity });
+    },
+    [updateProduct],
+  );
+
   const groups = useMemo(
     () => groupProductsByArea(filtered, scene),
     [filtered, scene],
@@ -63,7 +70,7 @@ export function ProductList() {
     () =>
       sceneProducts.reduce(
         (sum, p) =>
-          sum + priceForTier(p, pickSelectedTier(p, p.selectedTier)),
+          sum + priceForTier(p, pickSelectedTier(p, p.selectedTier)) * (p.quantity || 1),
         0,
       ),
     [sceneProducts],
@@ -139,6 +146,7 @@ export function ProductList() {
             groups={groups}
             onTierChange={handleTierChange}
             onRemove={handleRemove}
+            onQuantityChange={handleQuantityChange}
           />
         </main>
       ) : (
@@ -156,6 +164,7 @@ export function ProductList() {
                     product={p}
                     onTierChange={handleTierChange}
                     onRemove={handleRemove}
+                    onQuantityChange={handleQuantityChange}
                   />
                 ))}
               </div>

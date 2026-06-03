@@ -14,31 +14,51 @@ type Props = {
   product: Product;
   onTierChange: (id: string, tier: PriceTier) => void;
   onRemove: (id: string) => void;
+  onQuantityChange: (id: string, quantity: number) => void;
 };
 
-function ProductCardInner({ product: p, onTierChange, onRemove }: Props) {
+function ProductCardInner({ product: p, onTierChange, onRemove, onQuantityChange }: Props) {
   const effectiveTier = pickSelectedTier(p, p.selectedTier);
 
   return (
     <article className="product-card">
       <div className="product-card-head">
-        <div className="product-card-name">{p.categoryName}</div>
-        <div className="product-card-actions">
-            <Link
-              to={`/edit/${p.id}`}
-              className="btn btn-sm btn-ghost"
-            >
-              编辑
-            </Link>
-            <button
-              type="button"
-              className="btn btn-sm btn-danger"
-              onClick={() => onRemove(p.id)}
-            >
-              删除
-            </button>
-          </div>
+        <div className="product-card-name">
+          {p.categoryName}
+          <span className="product-card-qty">
+            <span className="product-card-qty-label">X</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              className="product-card-qty-input"
+              value={p.quantity}
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
+                if (Number.isFinite(v) && v > 0) {
+                  onQuantityChange(p.id, v);
+                }
+              }}
+              onClick={(e) => e.stopPropagation()}
+              autoComplete="off"
+            />
+          </span>
         </div>
+        <div className="product-card-actions">
+          <Link
+            to={`/edit/${p.id}`}
+            className="btn btn-sm btn-ghost"
+          >
+            编辑
+          </Link>
+          <button
+            type="button"
+            className="btn btn-sm btn-danger"
+            onClick={() => onRemove(p.id)}
+          >
+            删除
+          </button>
+        </div>
+      </div>
 
       <div className="product-card-tiers">
         {TIER_ORDER.map((tier) => {
@@ -62,11 +82,11 @@ function ProductCardInner({ product: p, onTierChange, onRemove }: Props) {
                 empty
                   ? undefined
                   : (e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onTierChange(p.id, tier);
-                      }
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onTierChange(p.id, tier);
                     }
+                  }
               }
             >
               <div className="tier-panel-head">{TIER_LABELS[tier]}</div>
